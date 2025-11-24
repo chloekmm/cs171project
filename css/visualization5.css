@@ -1,0 +1,281 @@
+/**
+ * VISUALIZATION 5 STYLES
+ * Funding & Literacy Outcomes
+ * 
+ * Matches the paper-textured, editorial aesthetic of the main site
+ * with bold typography and vintage design elements.
+ */
+
+/* Main wrapper */
+.viz5-wrapper {
+  position: relative;
+  min-height: 100vh;
+}
+
+/* Paper grain texture overlay (matches main site) */
+.viz5-wrapper::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: 
+    radial-gradient(200px 140px at 85% 0%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0)) no-repeat,
+    radial-gradient(600px 200px at 50% 100%, rgba(0, 0, 0, 0.05), transparent),
+    repeating-linear-gradient(45deg, rgba(0, 0, 0, 0.015), rgba(0, 0, 0, 0.015) 2px, transparent 2px, transparent 4px);
+  mix-blend-mode: multiply;
+  z-index: 1;
+}
+
+.viz5-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* Title section */
+.viz5-title h1 {
+  animation: slideInDown 0.6s ease-out;
+}
+
+.avatar-badge {
+  animation: fadeIn 0.8s ease-out 0.2s backwards;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.avatar-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Panels */
+.viz5-panels {
+  animation: fadeInUp 0.8s ease-out 0.3s backwards;
+}
+
+.viz5-panel {
+  animation: popIn 0.6s ease-out backwards;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.viz5-panel:nth-child(1) { animation-delay: 0.4s; }
+.viz5-panel:nth-child(2) { animation-delay: 0.5s; }
+.viz5-panel:nth-child(3) { animation-delay: 0.6s; }
+
+.viz5-panel:hover {
+  transform: translateY(-4px);
+  box-shadow: 8px 8px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* Panel titles */
+.viz5-panel h3 {
+  text-transform: uppercase;
+}
+
+/* Insights section */
+.viz5-insights {
+  animation: fadeInUp 0.8s ease-out 0.7s backwards;
+}
+
+.viz5-insights h3 {
+  text-transform: uppercase;
+}
+
+/* Insight cards */
+.viz5-insights > div > div {
+  animation: fadeIn 0.5s ease-out backwards;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.viz5-insights > div > div:nth-child(1) { animation-delay: 0.8s; }
+.viz5-insights > div > div:nth-child(2) { animation-delay: 0.9s; }
+.viz5-insights > div > div:nth-child(3) { animation-delay: 1s; }
+.viz5-insights > div > div:nth-child(4) { animation-delay: 1.1s; }
+
+.viz5-insights > div > div:hover {
+  transform: translateY(-2px);
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* SVG elements */
+.viz5-panel svg {
+  overflow: visible;
+}
+
+.viz5-panel svg text {
+  user-select: none;
+}
+
+/* Bar chart animations */
+.viz5-panel rect {
+  animation: growWidth 0.8s ease-out backwards;
+}
+
+.spending-panel rect:nth-child(1) { animation-delay: 0.6s; }
+.spending-panel rect:nth-child(2) { animation-delay: 0.7s; }
+.spending-panel rect:nth-child(3) { animation-delay: 0.8s; }
+
+/* Scatter plot circles */
+.scatter-panel circle {
+  transition: r 0.2s ease, opacity 0.2s ease;
+  cursor: pointer;
+}
+
+.scatter-panel circle:hover {
+  r: 5;
+  opacity: 1;
+}
+
+/* Pathway bars */
+.pathway-panel > div > div > div > div > div > div {
+  animation: growWidth 1s ease-out backwards;
+}
+
+.pathway-panel > div > div:nth-child(1) > div > div > div > div > div {
+  animation-delay: 0.8s;
+}
+
+.pathway-panel > div > div:nth-child(2) > div > div > div > div > div {
+  animation-delay: 1s;
+}
+
+.pathway-panel > div > div:nth-child(3) > div > div > div > div > div {
+  animation-delay: 1.2s;
+}
+
+/* Animations */
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes growWidth {
+  from {
+    width: 0;
+  }
+  to {
+    width: attr(data-width);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 1100px) {
+  .viz5-panels {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .viz5-panel {
+    width: 100%;
+    max-width: 500px;
+  }
+  
+  .viz5-insights > div {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .viz5-wrapper {
+    padding: 24px 20px;
+  }
+  
+  .viz5-title h1 {
+    font-size: 48px;
+  }
+  
+  .avatar-badge {
+    font-size: 14px;
+    padding: 10px 20px;
+  }
+  
+  .viz5-panel {
+    padding: 20px;
+  }
+  
+  .viz5-panel h3 {
+    font-size: 24px;
+  }
+  
+  .viz5-insights {
+    padding: 24px;
+  }
+  
+  .viz5-insights h3 {
+    font-size: 28px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .viz5-wrapper::before {
+    display: none;
+  }
+  
+  .viz5-panel {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  .viz5-panel:hover {
+    transform: none;
+    box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .viz5-wrapper *,
+  .viz5-wrapper *::before,
+  .viz5-wrapper *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .viz5-panel {
+    border-width: 4px;
+  }
+  
+  .avatar-badge {
+    border: 2px solid #fff;
+  }
+}
