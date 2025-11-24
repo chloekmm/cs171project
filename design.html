@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Your Character – A Look @ Literacy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    :root{
+      --paper:#efe6da;
+    }
+    
+    .design-page{
+      min-height:100vh;
+      padding:50px 60px;
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:50px;
+      max-width:1400px;
+      margin:0 auto;
+      overflow:hidden;
+      background:var(--paper);
+    }
+    
+    /* Decorative grid background */
+    .grid-scribble{
+      position:absolute;
+      right:40px;
+      top:40px;
+      width:280px;
+      height:240px;
+      background-image:
+        linear-gradient(to right, rgba(15,15,15,0.15) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(15,15,15,0.15) 1px, transparent 1px);
+      background-size: 40px 100%, 100% 40px;
+      opacity:0.5;
+      z-index:0;
+      pointer-events:none;
+    }
+    
+    /* Plus cluster decorative element */
+    .plus-cluster{
+      position:absolute;
+      left:50%;
+      bottom:50px;
+      transform:translateX(-50%);
+      font-family:"Bebas Neue", Anton, Impact, system-ui, sans-serif;
+      font-size:64px;
+      letter-spacing:20px;
+      color:rgba(15,15,15,0.2);
+      opacity:0.6;
+      z-index:0;
+      pointer-events:none;
+      line-height:1.2;
+    }
+    
+    .plus-cluster div{
+      text-align:center;
+    }
+    
+    /* Ensure content is above decorative elements */
+    .control-panel,
+    .character-frame-container{
+      position:relative;
+      z-index:1;
+    }
+    
+    /* Add subtle background texture */
+    .design-page::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(0,0,0,0.02) 0%, transparent 50%),
+        repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(0,0,0,0.01) 2px, rgba(0,0,0,0.01) 4px);
+      pointer-events:none;
+      z-index:0;
+    }
+    
+    .return-btn{
+      position:absolute;
+      top:40px;
+      left:40px;
+      font-family:"IBM Plex Mono", ui-monospace, monospace;
+      font-size:14px;
+      color:#111;
+      text-decoration:none;
+      padding:8px 16px;
+      border:2px solid #111;
+      border-radius:20px;
+      background:#fff;
+      transition:background 0.2s ease, color 0.2s ease;
+      z-index:10;
+      box-shadow:2px 2px 0 rgba(0,0,0,0.1);
+    }
+    
+    .return-btn:hover{
+      background:#111;
+      color:#efe6da;
+    }
+    
+    .control-panel{
+      flex:0 0 300px;
+    }
+    
+    .control-group{
+      margin-bottom:28px;
+    }
+    
+    .control-label{
+      font-family:"IBM Plex Mono", ui-monospace, monospace;
+      font-size:11px;
+      font-weight:600;
+      margin-bottom:10px;
+      display:block;
+      color:#666;
+      letter-spacing:1.5px;
+      text-transform:uppercase;
+    }
+    
+    .control-input{
+      width:100%;
+      padding:12px 16px;
+      font-family:"IBM Plex Mono", ui-monospace, monospace;
+      font-size:14px;
+      border:2px solid #1d1d1d;
+      background:#fff;
+      color:#1d1d1d;
+      border-radius:6px;
+      transition:all 0.2s ease;
+      box-sizing:border-box;
+    }
+    
+    .control-input:focus{
+      outline:none;
+      border-color:#333;
+      box-shadow:0 0 0 3px rgba(29,29,29,0.1);
+    }
+    
+    .control-select{
+      width:100%;
+      padding:12px 16px;
+      font-family:"IBM Plex Mono", ui-monospace, monospace;
+      font-size:14px;
+      border:2px solid #1d1d1d;
+      background:#fff;
+      color:#1d1d1d;
+      border-radius:6px;
+      cursor:pointer;
+      transition:all 0.2s ease;
+      appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%231d1d1d' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;
+      background-position:right 12px center;
+      padding-right:36px;
+    }
+    
+    .control-select:focus{
+      outline:none;
+      border-color:#333;
+      box-shadow:0 0 0 3px rgba(29,29,29,0.1);
+    }
+    
+    .color-options{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    
+    .color-btn{
+      width:40px;
+      height:40px;
+      border:3px solid #1d1d1d;
+      border-radius:50%;
+      cursor:pointer;
+      transition:transform 0.2s ease, box-shadow 0.2s ease;
+      display:inline-block;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+    
+    .color-btn:hover{
+      transform:scale(1.1);
+      box-shadow:0 4px 8px rgba(0,0,0,0.2);
+    }
+    
+    .color-btn.active{
+      box-shadow:0 0 0 4px #efe6da, 0 0 0 6px #1d1d1d;
+    }
+    
+    .shuffle-btn{
+      width:100%;
+      padding:14px 20px;
+      font-family:"IBM Plex Mono", ui-monospace, monospace;
+      font-size:13px;
+      font-weight:600;
+      border:2px solid #1d1d1d;
+      background:#fff;
+      color:#1d1d1d;
+      border-radius:6px;
+      cursor:pointer;
+      text-align:center;
+      transition:all 0.2s ease;
+      text-transform:uppercase;
+      letter-spacing:1px;
+    }
+    
+    .shuffle-btn:hover{
+      background:#1d1d1d;
+      color:#fff;
+      transform:translateY(-2px);
+      box-shadow:0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .shuffle-btn:active{
+      transform:translateY(0);
+    }
+    
+    .shuffle-btn.shuffle-all{
+      background:#1d1d1d;
+      color:#fff;
+      font-size:14px;
+      padding:16px 32px;
+      border-width:3px;
+      margin-top:12px;
+      box-shadow:0 5px 0 #000, 0 8px 16px rgba(0,0,0,0.18);
+      letter-spacing:1.2px;
+    }
+    
+    .shuffle-btn.shuffle-all:hover{
+      background:#2a2a2a;
+      transform:translateY(-2px);
+      box-shadow:0 7px 0 #000, 0 10px 20px rgba(0,0,0,0.22);
+    }
+    
+    .shuffle-btn.shuffle-all:active{
+      transform:translateY(3px);
+      box-shadow:0 2px 0 #000, 0 4px 8px rgba(0,0,0,0.12);
+    }
+    
+    .character-frame-container{
+      flex:0 0 480px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+    }
+    
+    .frame{
+      width:100%;
+      max-width:420px;
+      background:#3a3a3a;
+      padding:28px;
+      border-radius:16px;
+      box-shadow:0 16px 40px rgba(0,0,0,0.25), inset 0 2px 4px rgba(0,0,0,0.3);
+      position:relative;
+    }
+    
+    .frame-inner{
+      background:#ffffff;
+      padding:50px 40px;
+      border:none;
+      border-radius:10px;
+      min-height:520px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+    }
+    
+    .character{
+      width:100%;
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      background:transparent;
+    }
+    
+    .character-img{
+      max-width:380px;
+      width:100%;
+      height:auto;
+      border-radius:0;
+      display:block;
+      min-height:380px;
+      object-fit:contain;
+      background:#ffffff;
+      /* filter:drop-shadow(0 8px 20px rgba(0,0,0,0.15)); */
+    }
+    
+    .character-img:not([src]),
+    .character-img[src=""]{
+      opacity:0;
+    }
+    
+    .start-btn{
+      margin-top:36px;
+      padding:16px 48px;
+      font-family:"IBM Plex Mono", ui-monospace, monospace;
+      font-size:15px;
+      font-weight:600;
+      background:#0d0d0d;
+      color:#fff;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+      box-shadow:0 6px 0 #000, 0 8px 16px rgba(0,0,0,0.2);
+      transition:all 0.2s ease;
+      letter-spacing:0.5px;
+      text-transform:uppercase;
+    }
+    
+    .start-btn:hover{
+      transform:translateY(2px);
+      box-shadow:0 4px 0 #000, 0 6px 12px rgba(0,0,0,0.2);
+    }
+    
+    .start-btn:active{
+      transform:translateY(4px);
+      box-shadow:0 2px 0 #000, 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .design-page > * {
+      animation: fadeIn 0.6s ease-out;
+    }
+    
+    .character-frame-container {
+      animation-delay: 0.2s;
+      animation-fill-mode: both;
+    }
+    
+    /* Welcome Popup Styles */
+    .welcome-popup {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 1;
+      transition: opacity 0.4s ease;
+    }
+    
+    .welcome-popup.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .welcome-popup-content {
+      background: var(--paper, #efe6da);
+      padding: 50px 60px;
+      border-radius: 12px;
+      border: 4px solid #111;
+      max-width: 700px;
+      width: 90%;
+      box-shadow: 8px 8px 0 #111, 0 20px 60px rgba(0,0,0,0.5);
+      animation: welcomePop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+    }
+    
+    @keyframes welcomePop {
+      from {
+        transform: scale(0.9) translateY(30px);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    .welcome-popup-title {
+      font-family: 'Anton', sans-serif;
+      font-size: 40px;
+      color: #1d1d1d;
+      margin-bottom: 24px;
+      letter-spacing: 2px;
+      line-height: 1.1;
+      text-align: center;
+    }
+    
+    .welcome-popup-body {
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      line-height: 1.8;
+      color: #333;
+      margin-bottom: 20px;
+    }
+    
+    .welcome-popup-body p {
+      margin-bottom: 18px;
+    }
+    
+    .welcome-popup-body strong {
+      color: #1d1d1d;
+      font-weight: 700;
+    }
+    
+    .welcome-popup-closing {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 15px;
+      color: #666;
+      font-style: italic;
+      margin-top: 24px;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+    
+    .welcome-popup-button {
+      display: block;
+      margin: 0 auto;
+      padding: 16px 48px;
+      background: #1d1d1d;
+      color: #fff;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #000, 0 8px 16px rgba(0,0,0,0.25);
+      transition: all 0.2s ease;
+    }
+    
+    .welcome-popup-button:hover {
+      transform: translateY(2px);
+      box-shadow: 0 4px 0 #000, 0 6px 12px rgba(0,0,0,0.2);
+    }
+    
+    .welcome-popup-button:active {
+      transform: translateY(5px);
+      box-shadow: 0 1px 0 #000, 0 4px 8px rgba(0,0,0,0.15);
+    }
+  </style>
+</head>
+<body>
+  <!-- Welcome Popup -->
+  <div class="welcome-popup" id="welcomePopup">
+    <div class="welcome-popup-content">
+      <h2 class="welcome-popup-title">Who Gets to Read?</h2>
+      <div class="welcome-popup-body">
+        <p>Not every child has the same chance to become a strong reader. This project shows how <strong>state, income, and resources</strong> create vastly different literacy outcomes before individual effort even enters the equation.</p>
+        <p>Create a student character below. The choices you make here will shape every visualization you encounter, and through their story, you'll see the patterns that affect millions of students navigating an unequal educational system.</p>
+      </div>
+      <div class="welcome-popup-closing">Design your character to begin the journey.</div>
+      <button class="welcome-popup-button" onclick="closeWelcomePopup()">Let's Begin</button>
+    </div>
+  </div>
+  
+  <main class="design-page">
+    <a href="investigate.html" class="return-btn">← Return</a>
+    
+    <!-- Left Control Panel -->
+    <div class="control-panel">
+      <div class="control-group">
+        <label class="control-label">NAME</label>
+        <input type="text" class="control-input" id="characterName" placeholder="Enter name" value="Alex">
+      </div>
+      
+      <div class="control-group">
+        <label class="control-label">GRADE</label>
+        <select class="control-select" id="characterGrade">
+          <option value="4" selected>4th Grade</option>
+          <option value="8">8th Grade</option>
+        </select>
+      </div>
+      
+      <div class="control-group">
+        <label class="control-label">SOCIOECONOMIC STATUS</label>
+        <select class="control-select" id="characterSES">
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+      
+      <div class="control-group">
+        <label class="control-label">STATE</label>
+        <select class="control-select" id="characterState">
+          <option value="AL">Alabama</option>
+          <option value="AK">Alaska</option>
+          <option value="AZ">Arizona</option>
+          <option value="AR">Arkansas</option>
+          <option value="CA">California</option>
+          <option value="CO">Colorado</option>
+          <option value="CT">Connecticut</option>
+          <option value="DE">Delaware</option>
+          <option value="FL">Florida</option>
+          <option value="GA">Georgia</option>
+          <option value="HI">Hawaii</option>
+          <option value="ID">Idaho</option>
+          <option value="IL">Illinois</option>
+          <option value="IN">Indiana</option>
+          <option value="IA">Iowa</option>
+          <option value="KS">Kansas</option>
+          <option value="KY">Kentucky</option>
+          <option value="LA">Louisiana</option>
+          <option value="ME">Maine</option>
+          <option value="MD">Maryland</option>
+          <option value="MA">Massachusetts</option>
+          <option value="MI">Michigan</option>
+          <option value="MN">Minnesota</option>
+          <option value="MS">Mississippi</option>
+          <option value="MO">Missouri</option>
+          <option value="MT">Montana</option>
+          <option value="NE">Nebraska</option>
+          <option value="NV">Nevada</option>
+          <option value="NH">New Hampshire</option>
+          <option value="NJ">New Jersey</option>
+          <option value="NM">New Mexico</option>
+          <option value="NY">New York</option>
+          <option value="NC">North Carolina</option>
+          <option value="ND">North Dakota</option>
+          <option value="OH">Ohio</option>
+          <option value="OK">Oklahoma</option>
+          <option value="OR">Oregon</option>
+          <option value="PA">Pennsylvania</option>
+          <option value="RI">Rhode Island</option>
+          <option value="SC">South Carolina</option>
+          <option value="SD">South Dakota</option>
+          <option value="TN">Tennessee</option>
+          <option value="TX">Texas</option>
+          <option value="UT">Utah</option>
+          <option value="VT">Vermont</option>
+          <option value="VA">Virginia</option>
+          <option value="WA">Washington</option>
+          <option value="WV">West Virginia</option>
+          <option value="WI">Wisconsin</option>
+          <option value="WY">Wyoming</option>
+        </select>
+      </div>
+      
+    </div>
+    
+    <!-- Center Character Frame -->
+    <div class="character-frame-container">
+      <div class="frame">
+        <div class="frame-inner">
+          <div class="character" id="character">
+            <img id="characterImg" class="character-img" src="https://api.dicebear.com/9.x/big-ears/svg?seed=Alex&backgroundColor=faf8f5&hairColor=2c1810&skinColor=edb98a" alt="Your character" />
+          </div>
+        </div>
+      </div>
+      
+      <button class="start-btn" id="startBtn">Start Journey</button>
+    </div>
+    
+    <!-- Right Control Panel -->
+    <div class="control-panel">
+      <div class="control-group">
+        <label class="control-label">Customize Avatar</label>
+        <button class="shuffle-btn shuffle-all" id="shuffleAllBtn">🎲 Shuffle Everything</button>
+      </div>
+    </div>
+    
+    <!-- Decorative background elements -->
+    <div class="grid-scribble" aria-hidden="true"></div>
+    <div class="plus-cluster" aria-hidden="true">
+      <div>+ + + + + +</div>
+      <div>+ + + + + +</div>
+      <div>+ + + + + +</div>
+    </div>
+  </main>
+  
+  <script>
+    // Function to close the welcome popup
+    function closeWelcomePopup() {
+      const popup = document.getElementById('welcomePopup');
+      if (popup) {
+        popup.classList.add('hidden');
+        // After transition, remove from DOM
+        setTimeout(() => {
+          popup.style.display = 'none';
+        }, 400);
+      }
+    }
+    
+    // Store character data and avatar customization
+    const characterData = {
+      name: 'Alex',
+      grade: '4', // Default to 4th grade (NAEP supports 4 and 8)
+      state: 'CA',
+      ses: 'medium',
+      // Avatar customization options
+      avatarOptions: {
+        seed: 'Alex' // This seed stays fixed until shuffle is pressed
+      }
+    };
+    
+    // Store available options from API schema
+    let availableOptions = {};
+    
+    // DiceBear API base URL - using big-ears style
+    const DICEBEAR_API = 'https://api.dicebear.com/9.x/big-ears/svg';
+    const SCHEMA_API = 'https://api.dicebear.com/9.x/big-ears/schema.json';
+    
+    // Fetch available options from schema
+    async function fetchAvailableOptions() {
+      try {
+        const response = await fetch(SCHEMA_API);
+        const schema = await response.json();
+        availableOptions = schema.properties || {};
+        console.log('Loaded options from schema:', availableOptions);
+        
+        // Log specific properties to debug
+        ['hair', 'frontHair', 'face', 'eyes', 'ear', 'nose', 'mouth'].forEach(prop => {
+          if (availableOptions[prop]) {
+            console.log(`${prop} options:`, availableOptions[prop]);
+          } else {
+            console.warn(`${prop} not found in schema`);
+          }
+        });
+      } catch (error) {
+        console.error('Failed to fetch schema:', error);
+      }
+    }
+    
+    // Get random value from array or generate random number
+    function getRandomValue(property, options) {
+      if (!options || !options[property]) {
+        console.warn(`Property ${property} not found in options`);
+        return null;
+      }
+      
+      const prop = options[property];
+      
+      // Handle enum arrays (like cheek, ear, eyes, hair, frontHair, face, etc.)
+      if (prop.enum && Array.isArray(prop.enum) && prop.enum.length > 0) {
+        const randomIndex = Math.floor(Math.random() * prop.enum.length);
+        const value = prop.enum[randomIndex];
+        console.log(`Random ${property}:`, value, `from ${prop.enum.length} options`);
+        return value;
+      }
+      
+      // Handle items with enum (nested structure)
+      if (prop.items && prop.items.enum && Array.isArray(prop.items.enum) && prop.items.enum.length > 0) {
+        const randomIndex = Math.floor(Math.random() * prop.items.enum.length);
+        const value = prop.items.enum[randomIndex];
+        console.log(`Random ${property} (from items):`, value);
+        return value;
+      }
+      
+      // Handle anyOf structure (alternative schema definitions)
+      if (prop.anyOf && Array.isArray(prop.anyOf)) {
+        for (const schema of prop.anyOf) {
+          if (schema.enum && Array.isArray(schema.enum) && schema.enum.length > 0) {
+            const randomIndex = Math.floor(Math.random() * schema.enum.length);
+            const value = schema.enum[randomIndex];
+            console.log(`Random ${property} (from anyOf):`, value);
+            return value;
+          }
+        }
+      }
+      
+      // Handle cheekProbability (0-100)
+      if (property === 'cheekProbability') {
+        if (prop.type === 'integer' || prop.type === 'number') {
+          const min = prop.minimum !== undefined ? prop.minimum : 0;
+          const max = prop.maximum !== undefined ? prop.maximum : 100;
+          const value = Math.floor(Math.random() * (max - min + 1)) + min;
+          console.log(`Random ${property}:`, value);
+          return value;
+        }
+      }
+      
+      // Handle color arrays (hairColor, skinColor)
+      if (property.includes('Color')) {
+        if (prop.items && prop.items.pattern) {
+          // Generate random hex color
+          const value = Math.floor(Math.random() * 16777215).toString(16).padStart(6, '0');
+          console.log(`Random ${property}:`, value);
+          return value;
+        }
+        // If it's an enum array of colors
+        if (prop.items && prop.items.enum && Array.isArray(prop.items.enum)) {
+          const randomIndex = Math.floor(Math.random() * prop.items.enum.length);
+          const value = prop.items.enum[randomIndex];
+          console.log(`Random ${property} (color enum):`, value);
+          return value;
+        }
+      }
+      
+      console.warn(`Could not determine random value for ${property}:`, prop);
+      return null;
+    }
+    
+    // Generate avatar URL with current settings
+    function generateAvatarUrl() {
+      // Use the seed from avatarOptions, not the name directly
+      // This way the avatar appearance stays the same when typing the name
+      const seedValue = characterData.avatarOptions.seed || characterData.name || 'student';
+      const params = new URLSearchParams({
+        seed: seedValue,
+        backgroundColor: 'faf8f5'
+      });
+      
+      // Add all avatar options (excluding seed as it's already added)
+      Object.keys(characterData.avatarOptions).forEach(key => {
+        if (key !== 'seed' && characterData.avatarOptions[key] !== null && characterData.avatarOptions[key] !== undefined && characterData.avatarOptions[key] !== '') {
+          const value = characterData.avatarOptions[key];
+          // Ensure value is a string
+          params.append(key, String(value));
+        }
+      });
+      
+      const url = `${DICEBEAR_API}?${params.toString()}`;
+      console.log('Generated avatar URL:', url);
+      return url;
+    }
+    
+    // Update character avatar
+    function updateCharacter() {
+      const img = document.getElementById('characterImg');
+      if (!img) {
+        console.error('Character image element not found');
+        return;
+      }
+      
+      const newUrl = generateAvatarUrl();
+      
+      // Set the image source
+      img.src = newUrl;
+      img.alt = `${characterData.name}'s character`;
+      
+      // Handle image load
+      img.onload = function() {
+        console.log('Avatar loaded successfully');
+      };
+      
+      // Handle image error
+      img.onerror = function() {
+        console.error('Failed to load avatar image');
+        // Fallback
+        img.src = `${DICEBEAR_API}?seed=${characterData.name}&backgroundColor=faf8f5`;
+      };
+      
+      // Store the full URL in character data for later use
+      characterData.avatarUrl = newUrl;
+    }
+    
+    // Shuffle a specific feature
+    function shuffleFeature(feature) {
+      const randomValue = getRandomValue(feature, availableOptions);
+      if (randomValue !== null) {
+        characterData.avatarOptions[feature] = randomValue;
+        updateCharacter();
+        console.log(`Shuffled ${feature}:`, randomValue);
+      } else {
+        console.warn(`Could not shuffle ${feature} - options not available`);
+      }
+    }
+    
+    // Shuffle all features
+    function shuffleAll() {
+      const features = ['cheek', 'cheekProbability', 'ear', 'eyes', 'face', 'mouth', 'nose', 
+                       'hair', 'frontHair', 'sideburn', 'hairColor', 'skinColor'];
+      
+      console.log('Starting shuffle all...');
+      console.log('Available options:', availableOptions);
+      
+      // Generate a new random seed for the avatar
+      // This ensures a completely new avatar appearance
+      const randomSeed = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      characterData.avatarOptions.seed = randomSeed;
+      
+      features.forEach(feature => {
+        const randomValue = getRandomValue(feature, availableOptions);
+        if (randomValue !== null) {
+          characterData.avatarOptions[feature] = randomValue;
+          console.log(`Set ${feature} to:`, randomValue);
+        } else {
+          console.warn(`Failed to get random value for ${feature}`);
+        }
+      });
+      
+      console.log('Final avatar options:', characterData.avatarOptions);
+      updateCharacter();
+      console.log('Shuffled all features');
+    }
+    
+    // Initialize shuffle button
+    async function initializeShuffleButton() {
+      // Wait for options to be loaded
+      await fetchAvailableOptions();
+      
+      // Set up shuffle button
+      const shuffleBtn = document.getElementById('shuffleAllBtn');
+      if (shuffleBtn) {
+        shuffleBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          
+          shuffleAll();
+          
+          // Add visual feedback
+          this.style.transform = 'scale(0.95)';
+          setTimeout(() => {
+            this.style.transform = '';
+          }, 150);
+          
+          return false;
+        });
+      }
+    }
+    
+    // Name input
+    document.getElementById('characterName').addEventListener('input', function() {
+      characterData.name = this.value || 'Alex';
+      // Don't update the character when typing - only update the name
+      // The avatar appearance should only change when shuffle is pressed
+    });
+    
+    // Grade selector
+    document.getElementById('characterGrade').addEventListener('change', function() {
+      characterData.grade = this.value;
+    });
+    
+    // Socioeconomic status selector
+    document.getElementById('characterSES').addEventListener('change', function() {
+      characterData.ses = this.value;
+    });
+    
+    // State selector
+    document.getElementById('characterState').addEventListener('change', function() {
+      characterData.state = this.value;
+      // Don't update the character when changing state - only update the data
+    });
+    
+    // Load character data from localStorage if it exists
+    function loadCharacterData() {
+      try {
+        const saved = localStorage.getItem('characterData');
+        if (saved) {
+          const savedData = JSON.parse(saved);
+          // Restore all character data including avatar options
+          if (savedData.name) characterData.name = savedData.name;
+          if (savedData.grade) characterData.grade = savedData.grade;
+          if (savedData.state) characterData.state = savedData.state;
+          if (savedData.ses) characterData.ses = savedData.ses;
+          if (savedData.avatarOptions) {
+            characterData.avatarOptions = { ...characterData.avatarOptions, ...savedData.avatarOptions };
+          }
+          if (savedData.avatarUrl) characterData.avatarUrl = savedData.avatarUrl;
+          
+          // Update form inputs
+          document.getElementById('characterName').value = characterData.name;
+          document.getElementById('characterGrade').value = characterData.grade;
+          document.getElementById('characterState').value = characterData.state;
+          document.getElementById('characterSES').value = characterData.ses;
+          
+          console.log('✅ Loaded character data from localStorage:', characterData);
+        }
+      } catch (e) {
+        console.warn('⚠️ Could not load character data from localStorage:', e);
+      }
+    }
+    
+    // Initialize when page loads
+    loadCharacterData(); // Load saved data first
+    initializeShuffleButton().then(() => {
+      updateCharacter(); // Then update the character display
+    });
+    
+    // Save character data to localStorage whenever it changes
+    function saveCharacterData() {
+      try {
+        // Always save the current avatar URL
+        characterData.avatarUrl = generateAvatarUrl();
+        localStorage.setItem('characterData', JSON.stringify(characterData));
+        console.log('💾 Saved character data to localStorage');
+      } catch (e) {
+        console.error('❌ Error saving character data:', e);
+      }
+    }
+    
+    // Save whenever shuffle happens
+    const originalShuffleAll = shuffleAll;
+    shuffleAll = function() {
+      originalShuffleAll();
+      saveCharacterData();
+    };
+    
+    const originalShuffleFeature = shuffleFeature;
+    shuffleFeature = function(feature) {
+      originalShuffleFeature(feature);
+      saveCharacterData();
+    };
+    
+    // Start button - save to localStorage and proceed
+    document.getElementById('startBtn').addEventListener('click', function() {
+      saveCharacterData();
+      // Redirect to desk page
+      window.location.href = 'desk.html';
+    });
+  </script>
+</body>
+</html>
+

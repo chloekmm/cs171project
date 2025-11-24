@@ -1,0 +1,1798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Desk – A Look @ Literacy</title>
+  
+  <!--
+    DESK VISUALIZATION WITH PROGRESS TRACKING
+    
+    Features:
+    - Grey dot indicators on 5 artifacts (map, laptop, books, paper, gradcap)
+    - Progress tracker in top-right corner
+    - Reset button to clear progress
+    - Uses localStorage key: 'deskVizProgress_v2'
+    
+    Troubleshooting:
+    - If counter shows wrong number: Click "Reset Progress" button
+    - Check browser console for debug info (F12)
+    - All 5 items should show grey pulsing dots initially
+  -->
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/visualization5.css" />
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+    }
+    
+    .instruction {
+      position: absolute;
+      top: 6%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Inter', sans-serif;
+      font-size: 20px;
+      font-weight: 1000;
+      color: #1d1d1d;
+      letter-spacing: 0.3px;
+      z-index: 15;
+      text-transform: lowercase;
+      text-align: center;
+      pointer-events: none;
+    }
+    
+    .desk-page {
+      min-height: 100vh;
+      width: 100vw;
+      position: relative;
+      background-image: url('png/desk.png');
+      background-size: 100%;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-color: #f5f0e8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* Container for clickable areas - matches the scaled background */
+    .clickable-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      z-index: 10;
+    }
+    
+    /* Clickable areas - subtle hover effect only */
+    .clickable-area {
+      position: absolute;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      z-index: 10;
+    }
+    
+    .clickable-area:hover {
+      transform: scale(1.02);
+    }
+    
+    /* Grey dot indicators */
+    .dot-indicator {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #4a4a4a 0%, #6a6a6a 100%);
+      border: 3px solid #2a2a2a;
+      border-radius: 50%;
+      box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2),
+        0 0 0 2px rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 20;
+      pointer-events: none;
+      animation: dotPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes dotPulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 
+          0 4px 12px rgba(0, 0, 0, 0.3),
+          inset 0 2px 4px rgba(255, 255, 255, 0.2),
+          0 0 0 2px rgba(255, 255, 255, 0.1);
+      }
+      50% {
+        transform: scale(1.15);
+        box-shadow: 
+          0 6px 18px rgba(0, 0, 0, 0.4),
+          inset 0 2px 4px rgba(255, 255, 255, 0.3),
+          0 0 0 4px rgba(74, 74, 74, 0.3);
+      }
+    }
+    
+    /* Hover state for dots */
+    .clickable-area:hover .dot-indicator {
+      transform: scale(1.2);
+      background: linear-gradient(135deg, #5a5a5a 0%, #7a7a7a 100%);
+      box-shadow: 
+        0 6px 16px rgba(0, 0, 0, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3),
+        0 0 0 3px rgba(255, 255, 255, 0.2);
+      animation: none;
+    }
+    
+    /* Clicked state - semi-transparent dot */
+    .clickable-area.clicked .dot-indicator {
+      background: linear-gradient(135deg, rgba(74, 74, 74, 0.3) 0%, rgba(106, 106, 106, 0.3) 100%);
+      border-color: rgba(42, 42, 42, 0.3);
+      opacity: 0.4;
+      box-shadow: 
+        0 2px 6px rgba(0, 0, 0, 0.15),
+        inset 0 1px 2px rgba(255, 255, 255, 0.1);
+      animation: none;
+    }
+    
+    .clickable-area.clicked:hover .dot-indicator {
+      transform: scale(1.05);
+      opacity: 0.5;
+    }
+    
+    /* Position dots on each artifact */
+    .clickable-map .dot-indicator {
+      top: 10%;
+      right: 10%;
+    }
+    
+    .clickable-laptop .dot-indicator {
+      top: 8%;
+      right: 12%;
+    }
+    
+    .clickable-books .dot-indicator {
+      top: 8%;
+      right: 15%;
+    }
+    
+    .clickable-paper .dot-indicator {
+      top: 10%;
+      right: 10%;
+    }
+    
+    .clickable-gradcap .dot-indicator {
+      top: 15%;
+      right: 20%;
+    }
+    
+    
+    /* Progress indicator */
+    .progress-indicator {
+      position: fixed;
+      top: 30px;
+      right: 30px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 15px 20px;
+      border-radius: 8px;
+      border: 2px solid #1d1d1d;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      z-index: 100;
+      box-shadow: 3px 3px 0 rgba(0,0,0,0.1);
+    }
+    
+    .progress-text {
+      color: #1d1d1d;
+      margin-bottom: 5px;
+    }
+    
+    .progress-bar {
+      width: 150px;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid #1d1d1d;
+      margin-bottom: 10px;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #228b22, #32cd32);
+      transition: width 0.5s ease;
+      width: 0%;
+    }
+    
+    .reset-btn {
+      width: 100%;
+      padding: 8px 12px;
+      background: #fff;
+      color: #666;
+      border: 2px solid #ccc;
+      border-radius: 4px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .reset-btn:hover {
+      background: #1d1d1d;
+      color: #fff;
+      border-color: #1d1d1d;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .reset-btn:active {
+      transform: translateY(0);
+      box-shadow: none;
+    }
+    
+    /* What's Next Button */
+    .whats-next-btn {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      padding: 14px 28px;
+      background: #1d1d1d;
+      color: #fff;
+      border: 2px solid #1d1d1d;
+      border-radius: 6px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      z-index: 100;
+      box-shadow: 3px 3px 0 rgba(0,0,0,0.2);
+      transition: all 0.2s ease;
+      letter-spacing: 0.5px;
+    }
+    
+    .whats-next-btn:hover {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0 rgba(0,0,0,0.2);
+    }
+    
+    /* Black screen overlay that scrolls up */
+    .black-overlay {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 0;
+      background: #000;
+      z-index: 5000;
+      transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+    }
+    
+    .black-overlay.active {
+      height: 100vh;
+    }
+    
+    /* Next page - black page */
+    .next-page {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #000;
+      z-index: 5001;
+      display: none;
+      flex-direction: column;
+      overflow-y: auto;
+      color: #fff;
+      padding: 40px;
+    }
+    
+    .next-page.active {
+      display: flex;
+    }
+    
+    .next-page-content {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding-top: 80px;
+    }
+    
+    /* Typing animation header */
+    .typing-header {
+      font-family: 'Anton', sans-serif;
+      font-size: 64px;
+      color: #fff;
+      margin-bottom: 60px;
+      min-height: 80px;
+      letter-spacing: 2px;
+    }
+    
+    .typing-header .cursor {
+      display: inline-block;
+      width: 4px;
+      height: 64px;
+      background: #fff;
+      margin-left: 4px;
+      animation: blink 1s infinite;
+      vertical-align: bottom;
+    }
+    
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+    
+    /* Resources section */
+    .resources-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 30px;
+      margin-top: 40px;
+    }
+    
+    .resource-category {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 30px;
+    }
+    
+    .category-title {
+      font-family: 'Anton', sans-serif;
+      font-size: 24px;
+      color: #fff;
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+      padding-bottom: 10px;
+    }
+    
+    .resource-item {
+      margin-bottom: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .resource-item:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    
+    .resource-name {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 16px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    
+    .resource-description {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.8);
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+    
+    .resource-link {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+    
+    .resource-link:hover {
+      color: #fff;
+      text-decoration: underline;
+    }
+    
+    /* Back button on next page */
+    .back-btn {
+      position: fixed;
+      top: 40px;
+      left: 40px;
+      padding: 12px 24px;
+      background: transparent;
+      color: #fff;
+      border: 2px solid #fff;
+      border-radius: 6px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      display: inline-block;
+      z-index: 5002;
+    }
+    
+    .back-btn:hover {
+      background: #fff;
+      color: #000;
+    }
+    
+    /* Position clickable areas over objects - adjusted based on image */
+    /* Framed Picture/Tablet - left side of desk, upper half is clickable */
+    .clickable-avatar {
+      left: 10%;
+      bottom: 38%;
+      width: 11%;
+      height: 22%;
+    }
+    
+    /* US Map - on wall, behind and above framed picture, top half is clickable */
+    .clickable-map {
+      left: 14%;
+      top: 12%;
+      width: 24%;
+      height: 30%;
+    }
+    
+    /* Open Book - on desk surface, to the right of framed picture */
+    .clickable-book {
+      left: 22%;
+      bottom: 20%;
+      width: 15%;
+      height: 20%;
+    }
+    
+    /* Laptop - center of desk, screen area */
+    .clickable-laptop {
+      left: 40%;
+      bottom: 34%;
+      width: 20%;
+      height: 34%;
+    }
+    
+    /* Stack of Books - right of laptop, covers both books */
+    .clickable-books {
+      left: 66%;
+      bottom: 34%;
+      width: 15%;
+      height: 15%;
+    }
+    
+    /* Graduation Cap - on top of books stack */
+    .clickable-gradcap {
+      left: 68%;
+      bottom: 50%;
+      width: 12%;
+      height: 18%;
+    }
+    
+    /* Graded Paper - in front of books, A+ grade and checkboxes area */
+    .clickable-paper {
+      left: 76%;
+      bottom: 22%;
+      width: 12%;
+      height: 22%;
+    }
+    
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal.active {
+      display: flex;
+    }
+    
+    .modal-content {
+      background: var(--paper, #efe6da);
+      padding: 30px;
+      border-radius: 8px;
+      border: 3px solid var(--ink, #111);
+      max-width: 1100px;
+      width: 95%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 5px 5px 0 var(--ink, #111), 0 20px 60px rgba(0,0,0,0.3);
+      animation: slideUp 0.3s ease;
+    }
+    
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .modal-title {
+      font-family: 'Anton', sans-serif;
+      font-size: 24px;
+      color: #1d1d1d;
+      letter-spacing: 1px;
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+      color: #666;
+      line-height: 1;
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+    }
+    
+    .modal-close:hover {
+      color: #1d1d1d;
+    }
+    
+    .modal-body {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px;
+      color: #333;
+      line-height: 1.8;
+    }
+    
+    .modal-link {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 12px 24px;
+      background: #1d1d1d;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 4px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      transition: background 0.2s;
+    }
+    
+    .modal-link:hover {
+      background: #333;
+    }
+    
+    @keyframes slideUp {
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* Context Modal - appears in front of visualization modal */
+    .context-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.75);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .context-modal.active {
+      display: flex;
+    }
+    
+    .context-modal-content {
+      background: var(--paper, #efe6da);
+      padding: 40px 50px;
+      border-radius: 12px;
+      border: 4px solid var(--ink, #111);
+      max-width: 650px;
+      width: 90%;
+      box-shadow: 8px 8px 0 var(--ink, #111), 0 20px 60px rgba(0,0,0,0.4);
+      animation: contextPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+    }
+    
+    @keyframes contextPop {
+      from {
+        transform: scale(0.9) translateY(20px);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+      }
+    }
+    
+    .context-modal-title {
+      font-family: 'Anton', sans-serif;
+      font-size: 32px;
+      color: #1d1d1d;
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+      line-height: 1.2;
+    }
+    
+    .context-modal-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      color: #333;
+      margin-bottom: 16px;
+    }
+    
+    .context-modal-text p {
+      margin-bottom: 14px;
+    }
+    
+    .context-modal-text strong {
+      color: #1d1d1d;
+      font-weight: 700;
+    }
+    
+    .context-modal-closing {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px;
+      color: #666;
+      font-style: italic;
+      margin-top: 20px;
+      margin-bottom: 28px;
+    }
+    
+    .context-modal-button {
+      display: inline-block;
+      padding: 14px 40px;
+      background: #1d1d1d;
+      color: #fff;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 13px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #000, 0 8px 16px rgba(0,0,0,0.2);
+      transition: all 0.2s ease;
+    }
+    
+    .context-modal-button:hover {
+      transform: translateY(2px);
+      box-shadow: 0 3px 0 #000, 0 6px 12px rgba(0,0,0,0.2);
+    }
+    
+    .context-modal-button:active {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 #000, 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .context-modal-close {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: none;
+      border: none;
+      font-size: 32px;
+      cursor: pointer;
+      color: #666;
+      line-height: 1;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s;
+      z-index: 10;
+    }
+    
+    .context-modal-close:hover {
+      color: #1d1d1d;
+    }
+  </style>
+</head>
+<body>
+  <main class="desk-page">
+    <div class="instruction">SELECT AN OBJECT TO EXPLORE</div>
+    
+    <!-- Progress Indicator -->
+    <div class="progress-indicator">
+      <div class="progress-text">Explored: <span id="progressCount">0/5</span></div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <button class="reset-btn" id="resetBtn">Reset Progress</button>
+    </div>
+    
+    <!-- Container for clickable areas that matches the scaled background -->
+    <div class="clickable-container">
+      <!-- Framed Picture/Tablet -->
+      <div class="clickable-area clickable-avatar" data-modal="avatar"></div>
+      
+      <!-- Open Book -->
+      <div class="clickable-area clickable-book" data-modal="book"></div>
+      
+      <!-- Laptop -->
+      <div class="clickable-area clickable-laptop" data-modal="laptop" data-item="laptop">
+        <div class="dot-indicator"></div>
+      </div>
+      
+      <!-- Stack of Books -->
+      <div class="clickable-area clickable-books" data-modal="books" data-item="books">
+        <div class="dot-indicator"></div>
+      </div>
+      
+      <!-- Graduation Cap -->
+      <div class="clickable-area clickable-gradcap" data-modal="gradcap" data-item="gradcap">
+        <div class="dot-indicator"></div>
+      </div>
+      
+      <!-- Graded Paper -->
+      <div class="clickable-area clickable-paper" data-modal="paper" data-item="paper">
+        <div class="dot-indicator"></div>
+      </div>
+      
+      <!-- US Map -->
+      <div class="clickable-area clickable-map" data-modal="map" data-item="map">
+        <div class="dot-indicator"></div>
+      </div>
+    </div>
+    
+    <!-- What's Next Button -->
+    <button class="whats-next-btn" id="whatsNextBtn">What's Next</button>
+    
+    <!-- Black overlay that scrolls up -->
+    <div class="black-overlay" id="blackOverlay"></div>
+    
+    <!-- Next Page (black page) -->
+    <div class="next-page" id="nextPage">
+      <a href="desk.html" class="back-btn">← Back</a>
+      <div class="next-page-content">
+        <h1 class="typing-header" id="typingHeader"></h1>
+        
+        <div class="intro-text" style="max-width: 900px; margin: 0 auto 50px auto; padding: 30px; background: rgba(255, 255, 255, 0.05); border-left: 4px solid rgba(255, 255, 255, 0.3); border-radius: 4px;">
+          <p style="font-family: 'Inter', sans-serif; font-size: 16px; color: rgba(255, 255, 255, 0.9); line-height: 1.8; margin-bottom: 16px;">
+            It is up to us to ensure that socioeconomic status and location don't determine someone's ability to get a quality education—especially now, as <a href="https://www.pew.org/en/research-and-analysis/articles/2025/11/12/higher-educations-uncertain-fiscal-future" target="_blank" style="color: #fff; text-decoration: underline; font-weight: 600;">public colleges and universities are squeezed by federal cuts, enrollment challenges, and state budget strain</a>.
+          </p>
+          <p style="font-family: 'Inter', sans-serif; font-size: 16px; color: rgba(255, 255, 255, 0.9); line-height: 1.8; margin: 0;">
+            In this challenging landscape, it is essential that we look to community organizations and support libraries—the foundational institutions that provide access to knowledge, resources, and opportunities regardless of background or zip code.
+          </p>
+        </div>
+        
+        <div class="resources-container">
+          <!-- National Organizations -->
+          <div class="resource-category">
+            <h2 class="category-title">National Organizations</h2>
+            
+            <div class="resource-item">
+              <div class="resource-name">Reading Partners</div>
+              <div class="resource-description">Provides one-on-one tutoring in low-income communities</div>
+              <a href="https://www.readingpartners.org" target="_blank" class="resource-link">www.readingpartners.org</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">First Book</div>
+              <div class="resource-description">Distributes books and resources to 6.5 million kids annually in low-income areas</div>
+              <a href="https://www.firstbook.org" target="_blank" class="resource-link">www.firstbook.org</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">ProLiteracy</div>
+              <div class="resource-description">Focuses on adult literacy education nationwide</div>
+              <a href="https://www.proliteracy.org" target="_blank" class="resource-link">www.proliteracy.org</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">Reading is Fundamental (RIF)</div>
+              <div class="resource-description">Reaches 91% of US elementary schools, serving 24 million children</div>
+              <a href="https://www.rif.org" target="_blank" class="resource-link">www.rif.org</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">Reach Out and Read</div>
+              <div class="resource-description">Provides books through pediatric checkups, reaching 4.4 million children (75% from low-income families)</div>
+              <a href="https://www.reachoutandread.org" target="_blank" class="resource-link">www.reachoutandread.org</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">Ferst Readers</div>
+              <div class="resource-description">Mails monthly books to children ages 0-5 in low-income communities across 11 states</div>
+              <a href="https://www.ferstreaders.org" target="_blank" class="resource-link">www.ferstreaders.org</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">Book Trust</div>
+              <div class="resource-description">Empowers kids from low-income families to choose their own books</div>
+              <a href="https://www.booktrust.org" target="_blank" class="resource-link">www.booktrust.org</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">Children's Literacy Initiative</div>
+              <div class="resource-description">Works with Pre-K through 5th grade teachers in under-resourced schools</div>
+              <a href="https://www.cli.org" target="_blank" class="resource-link">www.cli.org</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">Jumpstart</div>
+              <div class="resource-description">Provides language and literacy programs for preschoolers in low-income neighborhoods</div>
+              <a href="https://www.jstart.org" target="_blank" class="resource-link">www.jstart.org</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">National Center for Families Learning</div>
+              <div class="resource-description">Eradicates poverty through family education solutions</div>
+              <a href="https://www.familieslearning.org" target="_blank" class="resource-link">www.familieslearning.org</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">Imagination Library</div>
+              <div class="resource-description">Dolly Parton's program mailing free books to children birth to age 5</div>
+              <a href="https://imaginationlibrary.com" target="_blank" class="resource-link">imaginationlibrary.com</a>
+            </div>
+          </div>
+          
+          <!-- Philanthropic Organizations -->
+          <div class="resource-category">
+            <h2 class="category-title">Philanthropic Organizations</h2>
+            
+            <div class="resource-item">
+              <div class="resource-name">Carnegie Corporation of New York</div>
+              <div class="resource-description">Historic library funder, recently awarded $9 million to library systems nationwide</div>
+              <a href="https://www.carnegie.org" target="_blank" class="resource-link">www.carnegie.org</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">Knight Foundation</div>
+              <div class="resource-description">Funds library innovation and community adaptation</div>
+              <a href="https://www.knightfoundation.org/topics/libraries" target="_blank" class="resource-link">www.knightfoundation.org/topics/libraries</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">Mellon Foundation</div>
+              <div class="resource-description">Provides major grants for library support and operations</div>
+              <a href="#" class="resource-link">Visit website</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">W.K. Kellogg Foundation</div>
+              <div class="resource-description">Supports libraries serving vulnerable children and communities</div>
+              <a href="https://www.wkkf.org" target="_blank" class="resource-link">www.wkkf.org</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">Laura Bush Foundation for America's Libraries</div>
+              <div class="resource-description">Funds school library collections</div>
+              <a href="https://www.laurabushfoundation.org" target="_blank" class="resource-link">www.laurabushfoundation.org</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">Wish You Well Foundation</div>
+              <div class="resource-description">Supports adult and family literacy programs</div>
+              <a href="https://www.wishyouwellfoundation.org" target="_blank" class="resource-link">www.wishyouwellfoundation.org</a>
+            </div>
+          </div>
+          
+          <!-- Library Advocacy Organizations -->
+          <div class="resource-category">
+            <h2 class="category-title">Library Advocacy</h2>
+            
+            <div class="resource-item">
+              <div class="resource-name">EveryLibrary</div>
+              <div class="resource-description">501(c)(4) supporting library funding campaigns nationwide</div>
+              <a href="https://www.everylibrary.org" target="_blank" class="resource-link">www.everylibrary.org</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">EveryLibrary Institute</div>
+              <div class="resource-description">501(c)(3) think tank focused on library policy and advocacy</div>
+              <a href="https://www.everylibraryinstitute.org" target="_blank" class="resource-link">www.everylibraryinstitute.org</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">American Library Association (ALA)</div>
+              <div class="resource-description">Major lobbying force for libraries with various grant programs</div>
+              <a href="https://www.ala.org" target="_blank" class="resource-link">www.ala.org</a>
+            </div>
+            
+            <div class="resource-item">
+              <div class="resource-name">Little Free Library</div>
+              <div class="resource-description">Grassroots book-sharing movement</div>
+              <a href="https://littlefreelibrary.org" target="_blank" class="resource-link">littlefreelibrary.org</a>
+            </div>
+          </div>
+        </div>
+        
+        <div style="margin-top: 60px; padding: 30px; background: rgba(255, 255, 255, 0.05); border-radius: 8px; text-align: center;">
+          <p style="font-family: 'Inter', sans-serif; font-size: 14px; color: rgba(255, 255, 255, 0.8); line-height: 1.8;">
+            These organizations accept donations, offer volunteer opportunities, and provide various ways to support literacy and library access in underserved communities.
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Context modal for NAEP Scores -->
+    <div class="context-modal" id="paperContext">
+      <div class="context-modal-content">
+        <h3 class="context-modal-title">Let's Talk About Scores</h3>
+        <div class="context-modal-text">
+          <p>Before we explore the data, let's start with a question: <strong>What do you think your reading score would be?</strong> Make a prediction on the scale below. Then we'll reveal your actual NAEP score and see how close you were.</p>
+          <p>This simple exercise reveals something important: the gap between what you predict and your actual score often reflects how invisible educational inequality really is. We tend to attribute reading achievement to individual effort, but location, funding, and resources play a massive role.</p>
+        </div>
+        <div class="context-modal-closing">Ready to make your prediction?</div>
+        <button class="context-modal-button" onclick="hideContextModal('paperContext')">Make your prediction</button>
+      </div>
+    </div>
+    
+    <div class="context-modal" id="mapContext">
+      <div class="context-modal-content">
+        <h3 class="context-modal-title">The Geography of Literacy</h3>
+        <div class="context-modal-text">
+          <p><strong>Where you grow up shouldn't determine your ability to read—but in America, it often does.</strong> This map shows how NAEP reading scores vary dramatically by state, with some regions consistently outperforming others by margins that represent years of learning.</p>
+          <p>These gaps reflect systemic differences in school funding, teacher quality, and access to books.</p>
+        </div>
+        <div class="context-modal-closing">Explore your state's scores across grades and years to see the full picture.</div>
+        <button class="context-modal-button" onclick="hideContextModal('mapContext')">Explore the Map →</button>
+      </div>
+    </div>
+    
+    <div class="context-modal" id="booksContext">
+      <div class="context-modal-content">
+        <h3 class="context-modal-title">Where Are America's Library Deserts?</h3>
+        <div class="context-modal-text">
+          <p>In some states, students have access to <strong>20+ books per person</strong> through public libraries. In others, that number drops below 5.</p>
+          <p>This visualization maps <strong>"library deserts"</strong>—regions where access to books and literary spaces is critically limited. These gaps affect millions of K-12 students and reflect systemic underinvestment in public infrastructure that supports literacy.</p>
+        </div>
+        <div class="context-modal-closing">Explore your state's book access category and see how it compares nationally.</div>
+        <button class="context-modal-button" onclick="hideContextModal('booksContext')">Explore Book Access →</button>
+      </div>
+    </div>
+    
+    <div class="context-modal" id="gradcapContext">
+      <div class="context-modal-content">
+        <h3 class="context-modal-title">The Long Shadow of Early Literacy</h3>
+        <div class="context-modal-text">
+          <p>A student who reads proficiently in 4th grade is <strong>4x more likely to graduate college</strong> than one who doesn't. But even among strong readers, outcomes diverge dramatically based on income and geography.</p>
+          <p>This visualization predicts your college graduation likelihood using factors you encountered years ago: your reading score, your state's inequality, and your socioeconomic background.</p>
+          <p><strong>The scatter plot reveals an uncomfortable truth: literacy matters, but wealth and location often matter more.</strong></p>
+        </div>
+        <div class="context-modal-closing">See where you fall in the graduation prediction model.</div>
+        <button class="context-modal-button" onclick="hideContextModal('gradcapContext')">View Predictions →</button>
+      </div>
+    </div>
+    
+    <div class="context-modal" id="laptopContext">
+      <div class="context-modal-content">
+        <h3 class="context-modal-title">What's Your District Spending on You?</h3>
+        <div class="context-modal-text">
+          <p><strong>Behind every reading score is a budget decision.</strong> This personalized visualization reveals how much money is invested in your education—and how that investment compares to students across your state and nation.</p>
+          <p>You'll discover whether your district is above or below average, and see the broader truth: <strong>funding gaps often mirror literacy gaps</strong>, with profound implications for academic success.</p>
+        </div>
+        <div class="context-modal-closing">Explore your funding story and the patterns that shape educational opportunity.</div>
+        <button class="context-modal-button" onclick="hideContextModal('laptopContext')">Explore Funding →</button>
+      </div>
+    </div>
+    
+    <!-- Visualization Modals -->
+    <div class="modal" id="avatarModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Edit Student</h2>
+          <button class="modal-close" onclick="closeModal('avatarModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Edit your student character.</p>
+          <a href="design.html" class="modal-link">Go to Design Page</a>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal" id="mapModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">State Reading Scores</h2>
+          <button class="modal-close" onclick="closeModal('mapModal')">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px 0 0 0;">
+          <div id="viz2-container" style="min-height: 500px; width: 100%;"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal" id="bookModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Table of Contents</h2>
+          <button class="modal-close" onclick="closeModal('bookModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Return to table of contents.</p>
+          <a href="investigate.html" class="modal-link">Go to Table of Contents</a>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ✅ UPDATED: This is the laptop modal for Visualization 5 -->
+    <div class="modal" id="laptopModal">
+      <div class="modal-content" style="max-width: 1200px;">
+        <div class="modal-header">
+          <h2 class="modal-title">Funding & Literacy</h2>
+          <button class="modal-close" onclick="closeModal('laptopModal')">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 0;">
+          <div id="viz5-container" style="min-height: 600px; width: 100%;"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal" id="booksModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Library Deserts</h2>
+          <button class="modal-close" onclick="closeModal('booksModal')">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 20px 0 0 0;">
+          <div id="viz3-container" style="min-height: 500px; width: 100%;"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal" id="gradcapModal">
+      <div class="modal-content" style="max-width: 1000px;">
+        <div class="modal-header" style="margin-bottom: 8px; padding-bottom: 8px;">
+          <h2 class="modal-title" style="font-size: 20px;">High School Outcomes</h2>
+          <button class="modal-close" onclick="closeModal('gradcapModal')">&times;</button>
+        </div>
+        <div class="modal-body" style="padding: 10px; overflow-x: auto;">
+          <div id="viz4-container" style="width: 100%; max-width: 1100px; margin: 0 auto;"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="modal" id="paperModal">
+      <div class="modal-content" style="max-width: 1000px;">
+        <div class="modal-header">
+          <h2 class="modal-title">Let's Talk About Scores</h2>
+          <button class="modal-close" onclick="closeModal('paperModal')">&times;</button>
+        </div>
+        
+        <!-- NAEP Story Section -->
+        <div id="naep-story-section" style="background: #f7efe6; padding: 20px 28px; margin-bottom: 20px; border: 2px solid #1d1d1d; border-radius: 4px;">
+          <h3 style="font-size: 14px; font-weight: 700; margin: 0 0 8px 0; color: #1d1d1d; font-family: 'IBM Plex Mono', monospace; text-transform: uppercase; letter-spacing: 0.08em;">What is NAEP?</h3>
+          <p style="font-size: 12px; line-height: 1.8; margin: 0; color: #333; font-family: 'IBM Plex Mono', monospace;">
+            The National Assessment of Educational Progress (NAEP) is a continuing and nationally representative measure of trends in academic achievement of U.S. elementary and secondary students in various subjects. It is the largest continuing and nationally representative assessment of what our nation's students know and can do in select subjects. It was first administered in 1969 to measure student achievement nationally. Teachers, principals, parents, policymakers, and researchers all use NAEP results to assess progress and develop ways to improve education in the United States.
+          </p>
+        </div>
+        
+        <!-- Visualization Container -->
+        <div class="modal-body" style="padding: 0;">
+          <div id="viz1-container" style="width: 100%;"></div>
+        </div>
+      </div>
+    </div>
+  </main>
+  
+  <!-- D3.js and TopoJSON libraries -->
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://unpkg.com/topojson@3"></script>
+  <!-- SheetJS for Excel file parsing (if needed) -->
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+  
+  <!-- Helper functions for visualization3 -->
+  <script src="js/helpers3.js"></script>
+  
+  <!-- Make modal functions available immediately (before module loads) -->
+  <script>
+    // Function to hide context modal - simplified
+    window.hideContextModal = function(contextId) {
+      const contextModal = document.getElementById(contextId);
+      if (contextModal) {
+        contextModal.classList.remove('active');
+      }
+    };
+    
+    // Direct function to close paper context modal
+    function closePaperContext() {
+      const modal = document.getElementById('paperContext');
+      if (modal) {
+        modal.classList.remove('active');
+      }
+    }
+    
+    // Set up paper context modal buttons immediately
+    document.addEventListener('DOMContentLoaded', function() {
+      // Close button
+      const closeBtn = document.getElementById('paperCloseBtn');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          closePaperContext();
+        });
+      }
+      
+      // Prediction button
+      const predBtn = document.getElementById('paperPredictionBtn');
+      if (predBtn) {
+        predBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          closePaperContext();
+        });
+      }
+    });
+    
+    // Also set up immediately if DOM is already loaded
+    if (document.readyState === 'loading') {
+      // DOM hasn't finished loading yet, wait for DOMContentLoaded
+    } else {
+      // DOM is already loaded, set up immediately
+      setTimeout(function() {
+        const closeBtn = document.getElementById('paperCloseBtn');
+        if (closeBtn) {
+          closeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closePaperContext();
+          });
+        }
+        
+        const predBtn = document.getElementById('paperPredictionBtn');
+        if (predBtn) {
+          predBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            closePaperContext();
+          });
+        }
+      }, 100);
+    }
+    
+    // Function to show context modal
+    window.showContextModal = function(contextId) {
+      const contextModal = document.getElementById(contextId);
+      if (contextModal) {
+        contextModal.classList.add('active');
+      }
+    };
+    
+    // Map viz modals to their context modals
+    const contextMap = {
+      'mapModal': 'mapContext',
+      'booksModal': 'booksContext',
+      'gradcapModal': 'gradcapContext',
+      'laptopModal': 'laptopContext',
+      'paperModal': 'paperContext'
+    };
+    
+    // Define modal functions immediately so onclick handlers work
+    window.openModal = function(modalId) {
+      const modal = document.getElementById(modalId);
+      if (!modal) {
+        console.error('Modal not found:', modalId);
+        return;
+      }
+      
+      // First open the visualization modal (it will be behind the context modal)
+      modal.classList.add('active');
+      
+      // Initialize visualization immediately so it loads in background
+      // Note: gradcapModal and laptopModal initialization are handled in the override below to prevent duplicates
+      if (window.initVizMap && modalId === 'mapModal') {
+        window.initVizMap();
+      } else if (window.initVizBooks && modalId === 'booksModal') {
+        window.initVizBooks();
+      } else if (window.initVizPaper && modalId === 'paperModal') {
+        window.initVizPaper();
+      }
+      // Skip gradcapModal and laptopModal here - they're initialized in the module override
+      
+      // Then show the context modal on top (if it exists for this viz)
+      if (contextMap[modalId]) {
+        // Small delay to ensure viz modal is rendered first
+        setTimeout(() => {
+          showContextModal(contextMap[modalId]);
+        }, 50);
+      }
+    };
+    
+    window.closeModal = function(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.remove('active');
+      }
+    };
+  </script>
+  
+  <!-- Visualization modules -->
+  <script type="module">
+    // Import visualization functions
+    import { renderReadingMap } from './js/visualization2.js';
+    import { renderBookDesertMap } from './js/visualization3-with-avatar-pin.js';
+    import { renderLiteracyOutcomesScatter } from './js/visualization4.js';
+    import { renderScoreComparison } from './js/visualization1.js';
+    import { fetchNAEP, loadPIAAC } from './js/dataHelpers.js';
+    
+    // ✅ UPDATED: Import the integrated version of visualization5
+    import { renderFundingLiteracy } from './js/visualization5_integrated.js';
+    
+    // Track which visualizations have been initialized
+    const initializedViz = {
+      map: false,
+      books: false,
+      gradcap: false,
+      paper: false,
+      laptop: false
+    };
+    
+    // Function to reset visualizations (useful if character data changes)
+    function resetVisualizations() {
+      Object.keys(initializedViz).forEach(key => {
+        initializedViz[key] = false;
+      });
+    }
+    
+    // Get character data from localStorage
+    function getCharacterData() {
+      try {
+        const data = JSON.parse(localStorage.getItem('characterData') || '{}');
+        const charData = {
+          state: data.state || 'CA',
+          grade: parseInt(data.grade) || 4,
+          ses: data.ses || 'medium',
+          name: data.name || 'Student'
+        };
+        console.log('👤 Character data loaded from localStorage:', charData);
+        console.log('📦 Full localStorage data:', data);
+        return charData;
+      } catch (e) {
+        console.error('❌ Error loading character data:', e);
+        return { state: 'CA', grade: 4, ses: 'medium', name: 'Student' };
+      }
+    }
+    
+    // Convert SES to format expected by visualizations
+    function normalizeSES(ses) {
+      const sesMap = {
+        'low': 'Low',
+        'medium': 'Middle',
+        'high': 'High'
+      };
+      return sesMap[ses?.toLowerCase()] || 'Middle';
+    }
+    
+    // Normalize grade for visualizations (NAEP only supports 4 and 8)
+    function normalizeGrade(grade) {
+      const gradeNum = parseInt(grade) || 4;
+      // Users can only select 4 or 8, but ensure we return a valid value
+      if (gradeNum === 4 || gradeNum === 8) {
+        return gradeNum;
+      }
+      // Fallback: default to 4 if invalid grade
+      return 4;
+    }
+    
+    // Initialize visualization 2 (State Reading Scores Map)
+    async function initViz2() {
+      if (initializedViz.map) {
+        // Reset if already initialized to allow updates
+        const container = document.getElementById('viz2-container');
+        if (container) container.innerHTML = '';
+        initializedViz.map = false;
+      }
+      
+      const charData = getCharacterData();
+      const normalizedGrade = normalizeGrade(charData.grade);
+      console.log('🎯 Initializing Viz2 with character data:', charData);
+      console.log('📚 Normalized grade:', normalizedGrade, '(from', charData.grade, ')');
+      
+      const container = document.getElementById('viz2-container');
+      if (!container) {
+        console.error('Viz2 container not found');
+        return;
+      }
+      
+      try {
+        console.log('📊 Calling renderReadingMap with:', {
+          grade: normalizedGrade,
+          ses: normalizeSES(charData.ses),
+          selectedState: charData.state
+        });
+        
+        const vizInstance = await renderReadingMap({
+          container: container,
+          grade: normalizedGrade,
+          ses: normalizeSES(charData.ses),
+          selectedState: charData.state || null,
+          compareState: null
+        });
+        
+        console.log('✅ Viz2 initialized successfully');
+        console.log('🗺️ Map should show state:', charData.state);
+        initializedViz.map = true;
+      } catch (error) {
+        console.error('❌ Error initializing viz2:', error);
+        console.error('Error stack:', error.stack);
+        container.innerHTML = `<p style="color: red; padding: 20px;">Error loading visualization: ${error.message}. Check console for details.</p>`;
+      }
+    }
+    
+    // Initialize visualization 3 (Library Deserts)
+    async function initViz3() {
+      if (initializedViz.books) return;
+      
+      const container = document.getElementById('viz3-container');
+      if (!container) return;
+      
+      const charData = getCharacterData();
+      console.log('🎯 Initializing Viz3 with character data:', charData);
+      
+      try {
+        await renderBookDesertMap({
+          container: container,
+          selectedState: charData.state || null
+        });
+        console.log('✅ Viz3 initialized successfully');
+        initializedViz.books = true;
+      } catch (error) {
+        console.error('❌ Error initializing viz3:', error);
+        console.error('Error stack:', error.stack);
+        container.innerHTML = `<p style="color: red; padding: 20px;">Error loading visualization: ${error.message}. Check console for details.</p>`;
+      }
+    }
+    
+    // Initialize visualization 4 (High School Outcomes)
+    async function initViz4() {
+      // Always clear container first to prevent duplicates
+      const container = document.getElementById('viz4-container');
+      if (!container) {
+        console.error('Viz4 container not found');
+        return;
+      }
+      
+      // Clear container immediately
+      container.innerHTML = '';
+      
+      // Prevent duplicate initialization
+      if (initializedViz.gradcap) {
+        console.log('Viz4 already initialized, skipping...');
+        return;
+      }
+      
+      // Mark as initializing
+      initializedViz.gradcap = true;
+      
+      const charData = getCharacterData();
+      console.log('🎯 Initializing Viz4 with character data:', charData);
+      
+      try {
+        console.log('📊 Calling renderLiteracyOutcomesScatter with:', {
+          defaultMetric: 'HS Graduation',
+          avatarState: charData.state
+        });
+        
+        await renderLiteracyOutcomesScatter({
+          container: container,
+          defaultMetric: 'HS Graduation',
+          avatarState: charData.state || null
+        });
+        
+        console.log('✅ Viz4 initialized successfully');
+      } catch (error) {
+        console.error('❌ Error initializing viz4:', error);
+        console.error('Error stack:', error.stack);
+        container.innerHTML = `<p style="color: red; padding: 20px;">Error loading visualization: ${error.message}. Check console for details.</p>`;
+        initializedViz.gradcap = false; // Reset on error
+      }
+    }
+    
+    // Initialize visualization 1 (Predicted NAEP Scores)
+    async function initViz1() {
+      if (initializedViz.paper) {
+        const container = document.getElementById('viz1-container');
+        if (container) container.innerHTML = '';
+        initializedViz.paper = false;
+      }
+      
+      const charData = getCharacterData();
+      console.log('🎯 Initializing Viz1 with character data:', charData);
+      const container = document.getElementById('viz1-container');
+      if (!container) {
+        console.error('Viz1 container not found');
+        return;
+      }
+      
+      try {
+        // Show loading state
+        container.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;"><div style="display: inline-block; width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #1d1d1d; border-radius: 50%; animation: spin 1s linear infinite;"></div><p style="margin-top: 10px; font-size: 14px;">Loading...</p></div>';
+        
+        // Normalize grade for NAEP (only supports 4 and 8)
+        const normalizedGrade = normalizeGrade(charData.grade);
+        const sesKey = normalizeSES(charData.ses);
+        
+        // Use fast JSON-based approach from visualization1.js instead of slow Excel files
+        // The renderScoreComparison function will handle data loading internally using cached JSON
+        await renderScoreComparison({
+          container: container,
+          actualScore: null, // Let it load from JSON cache
+          predictedScore: null, // User will make prediction interactively
+          nationalAverage: null, // Let it load from JSON cache
+          state: charData.state,
+          grade: normalizedGrade,
+          ses: sesKey
+        });
+        
+        console.log('✅ Viz1 initialized successfully');
+        initializedViz.paper = true;
+      } catch (error) {
+        console.error('❌ Error initializing viz1:', error);
+        console.error('Error stack:', error.stack);
+        container.innerHTML = `<p style="color: red; padding: 20px;">Error loading visualization: ${error.message}. Check console for details.</p>`;
+      }
+    }
+    
+    // ✅ UPDATED: Initialize visualization 5 (Funding & Literacy) - SIMPLIFIED!
+    async function initViz5() {
+      // Always clear container first to prevent duplicates
+      const container = document.getElementById('viz5-container');
+      if (!container) {
+        console.error('Viz5 container not found');
+        return;
+      }
+      
+      // Clear container immediately
+      container.innerHTML = '';
+      
+      // Prevent duplicate initialization
+      if (initializedViz.laptop) {
+        console.log('Viz5 already initialized, skipping...');
+        return;
+      }
+      
+      // Mark as initializing
+      initializedViz.laptop = true;
+      
+      console.log('💻 Initializing Viz5 (Funding & Literacy)...');
+      
+      try {
+        // ✅ SIMPLE: Just call the function - it reads avatar automatically!
+        await renderFundingLiteracy({
+          container: container
+          // No avatar parameter needed - reads from localStorage automatically!
+        });
+        
+        console.log('✅ Viz5 initialized successfully');
+      } catch (error) {
+        console.error('❌ Error initializing viz5:', error);
+        console.error('Error stack:', error.stack);
+        container.innerHTML = `<p style="color: red; padding: 20px;">Error loading visualization: ${error.message}. Check console for details.</p>`;
+        initializedViz.laptop = false; // Reset on error
+      }
+    }
+    
+    // === Click Tracking Functionality ===
+    const STORAGE_KEY = 'deskVizProgress_v2'; // Updated key to avoid conflicts
+    const TOTAL_ITEMS = 5;
+    
+    // Get clicked items from localStorage
+    function getClickedItems() {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    }
+    
+    // Save clicked item to localStorage
+    function markItemClicked(itemId) {
+      const clicked = getClickedItems();
+      if (!clicked.includes(itemId)) {
+        clicked.push(itemId);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(clicked));
+        updateProgress();
+      }
+    }
+    
+    // Update progress indicator
+    function updateProgress() {
+      const clicked = getClickedItems();
+      const count = clicked.length;
+      const percentage = (count / TOTAL_ITEMS) * 100;
+      
+      document.getElementById('progressCount').textContent = `${count}/${TOTAL_ITEMS}`;
+      document.getElementById('progressFill').style.width = `${percentage}%`;
+    }
+    
+    // Apply greyed-out state to clicked items
+    function applyClickedStates() {
+      const clicked = getClickedItems();
+      document.querySelectorAll('.clickable-area').forEach(area => {
+        const itemId = area.dataset.item;
+        if (itemId && clicked.includes(itemId)) {
+          area.classList.add('clicked');
+        }
+      });
+    }
+    
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      // Debug: Clear old storage keys
+      const oldKeys = ['literacyVizClicked', 'viz4_outcomes_cache'];
+      oldKeys.forEach(key => {
+        if (localStorage.getItem(key)) {
+          console.log('Clearing old storage key:', key);
+        }
+      });
+      
+      // Debug: List all tracked items
+      const allItems = [];
+      document.querySelectorAll('[data-item]').forEach(el => {
+        allItems.push(el.dataset.item);
+      });
+      console.log('=== DESK PROGRESS TRACKER ===');
+      console.log('All tracked items:', allItems);
+      console.log('Items clicked:', getClickedItems());
+      console.log('Progress:', getClickedItems().length + '/' + TOTAL_ITEMS);
+      
+      updateProgress();
+      applyClickedStates();
+      
+      // Reset button functionality
+      const resetBtn = document.getElementById('resetBtn');
+      if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+          if (confirm('Are you sure you want to reset all progress? This will clear which items you\'ve explored.')) {
+            // Clear localStorage
+            localStorage.removeItem(STORAGE_KEY);
+            
+            // Remove clicked states from all areas
+            document.querySelectorAll('.clickable-area').forEach(area => {
+              area.classList.remove('clicked');
+            });
+            
+            // Reset progress display
+            updateProgress();
+            
+            // Show confirmation
+            const originalText = resetBtn.textContent;
+            resetBtn.textContent = '✓ Reset!';
+            resetBtn.style.background = '#228b22';
+            resetBtn.style.color = '#fff';
+            resetBtn.style.borderColor = '#228b22';
+            
+            setTimeout(() => {
+              resetBtn.textContent = originalText;
+              resetBtn.style.background = '';
+              resetBtn.style.color = '';
+              resetBtn.style.borderColor = '';
+            }, 2000);
+          }
+        });
+      }
+    });
+    
+    // Setup click handlers with tracking
+    document.querySelectorAll('.clickable-area').forEach(area => {
+      area.addEventListener('click', function() {
+        const itemId = this.dataset.item;
+        const modalId = this.dataset.modal + 'Modal';
+        
+        // Mark item as clicked if it has a data-item attribute
+        if (itemId) {
+          markItemClicked(itemId);
+          
+          // Apply greyed-out state immediately (dot becomes semi-transparent)
+          this.classList.add('clicked');
+        }
+        
+        // Open modal
+        window.openModal(modalId);
+      });
+    });
+    
+    // Override window functions to include visualization initialization
+    const originalOpenModal = window.openModal;
+    window.openModal = function(modalId) {
+      originalOpenModal(modalId);
+      
+      // Initialize visualization when modal opens
+      if (modalId === 'mapModal') {
+        initViz2();
+      } else if (modalId === 'booksModal') {
+        initViz3();
+      } else if (modalId === 'gradcapModal') {
+        initViz4();
+      } else if (modalId === 'paperModal') {
+        initViz1();
+      } else if (modalId === 'laptopModal') {
+        // ✅ UPDATED: Initialize viz5 when laptop is clicked
+        initViz5();
+      }
+    };
+    
+    // Override closeModal
+    window.closeModal = function(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.remove('active');
+      }
+    };
+    
+    // Also expose init functions for the pre-defined openModal
+    window.initVizMap = initViz2;
+    window.initVizBooks = initViz3;
+    window.initVizGradcap = initViz4;
+    window.initVizPaper = initViz1;
+    window.initVizLaptop = initViz5;
+    
+    // Close modal on background click
+    document.querySelectorAll('.modal').forEach(modal => {
+      modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+          this.classList.remove('active');
+        }
+      });
+    });
+    
+    // Close context modals on background click (but not on content clicks)
+    document.querySelectorAll('.context-modal').forEach(contextModal => {
+      // Background click to close
+      contextModal.addEventListener('click', function(e) {
+        if (e.target === this) {
+          this.classList.remove('active');
+        }
+      });
+      
+      // Prevent clicks on content from closing the modal
+      const content = contextModal.querySelector('.context-modal-content');
+      if (content) {
+        content.addEventListener('click', function(e) {
+          e.stopPropagation();
+        });
+      }
+      
+      // Add event listeners to buttons for all modals
+      const closeBtn = contextModal.querySelector('.context-modal-close');
+      if (closeBtn && !closeBtn.dataset.listenerAdded) {
+        closeBtn.dataset.listenerAdded = 'true';
+        closeBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          window.hideContextModal(contextModal.id);
+        });
+      }
+      
+      const actionBtn = contextModal.querySelector('.context-modal-button');
+      if (actionBtn && !actionBtn.dataset.listenerAdded) {
+        actionBtn.dataset.listenerAdded = 'true';
+        actionBtn.addEventListener('click', function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          window.hideContextModal(contextModal.id);
+        });
+      }
+    });
+    
+    // Close modal on Escape key
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        // First close any active context modals
+        document.querySelectorAll('.context-modal.active').forEach(modal => {
+          modal.classList.remove('active');
+        });
+        // Then close any active viz modals
+        document.querySelectorAll('.modal.active').forEach(modal => {
+          modal.classList.remove('active');
+        });
+      }
+    });
+    
+    // Handle URL hash to open specific modal from table of contents
+    function handleHashNavigation() {
+      const hash = window.location.hash.substring(1); // Remove the #
+      const modalMap = {
+        'map': 'mapModal',
+        'laptop': 'laptopModal',
+        'books': 'booksModal',
+        'paper': 'paperModal',
+        'gradcap': 'gradcapModal'
+      };
+      
+      if (hash && modalMap[hash]) {
+        // Small delay to ensure page is fully loaded
+        setTimeout(() => {
+          window.openModal(modalMap[hash]);
+        }, 100);
+        // Clear the hash after opening modal
+        history.replaceState(null, null, ' ');
+      }
+    }
+    
+    // Check hash on page load
+    window.addEventListener('load', handleHashNavigation);
+    // Also check hash immediately in case page is already loaded
+    if (document.readyState === 'complete') {
+      handleHashNavigation();
+    } else {
+      window.addEventListener('DOMContentLoaded', handleHashNavigation);
+    }
+    
+    // Typing animation function
+    function typeText(element, text, speed = 100) {
+      let i = 0;
+      element.innerHTML = '';
+      const cursor = document.createElement('span');
+      cursor.className = 'cursor';
+      element.appendChild(cursor);
+      
+      function type() {
+        if (i < text.length) {
+          const char = document.createTextNode(text[i]);
+          element.insertBefore(char, cursor);
+          i++;
+          setTimeout(type, speed);
+        } else {
+          // Keep cursor blinking
+        }
+      }
+      type();
+    }
+    
+    // What's Next button functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const whatsNextBtn = document.getElementById('whatsNextBtn');
+      const blackOverlay = document.getElementById('blackOverlay');
+      const nextPage = document.getElementById('nextPage');
+      const typingHeader = document.getElementById('typingHeader');
+      
+      if (whatsNextBtn && blackOverlay && nextPage) {
+        whatsNextBtn.addEventListener('click', function() {
+          // Start the scroll-up animation
+          blackOverlay.classList.add('active');
+          
+          // After animation completes, show the next page
+          setTimeout(function() {
+            nextPage.classList.add('active');
+            // Hide the overlay after a brief moment
+            setTimeout(function() {
+              blackOverlay.style.display = 'none';
+              // Start typing animation
+              if (typingHeader) {
+                typeText(typingHeader, 'Now what?', 80);
+              }
+            }, 100);
+          }, 800); // Match the transition duration
+        });
+      }
+    });
+  </script>
+</body>
+</html>

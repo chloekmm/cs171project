@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Investigate – A Look @ Literacy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .investigate-page{
+      min-height:100vh;
+      padding:60px 40px;
+      position:relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:linear-gradient(135deg, #efe6da 0%, #f5efe6 100%);
+    }
+    
+    .back-link{
+      position:absolute;
+      top:30px;
+      left:30px;
+      font-family:"IBM Plex Mono", ui-monospace, monospace;
+      font-size:13px;
+      color:#111;
+      text-decoration:none;
+      padding:10px 20px;
+      border:3px solid #1d1d1d;
+      border-radius:6px;
+      background:#fff;
+      transition:all 0.2s ease;
+      z-index:20;
+      box-shadow:4px 4px 0 #1d1d1d;
+      font-weight:600;
+    }
+    
+    .back-link:hover{
+      background:#1d1d1d;
+      color:#fff;
+      transform:translate(2px, 2px);
+      box-shadow:2px 2px 0 #1d1d1d;
+    }
+    
+    .frame-container{
+      position:relative;
+      width:100%;
+      max-width:1100px;
+    }
+    
+    .white-frame{
+      background:#fff;
+      border:10px solid #1d1d1d;
+      padding:70px 60px;
+      position:relative;
+      min-height:650px;
+      box-shadow:12px 12px 0 rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.05);
+    }
+    
+    .divider{
+      position:absolute;
+      left:54%;
+      top:70px;
+      bottom:70px;
+      width:5px;
+      background:#1d1d1d;
+      z-index:1;
+    }
+    
+    .left-content{
+      width:46%;
+      padding-right:50px;
+      position:relative;
+      z-index:2;
+    }
+    
+    .toc-title{
+      font-family:Anton, Impact, system-ui, sans-serif;
+      font-size:48px;
+      margin:0 0 16px;
+      letter-spacing:3px;
+      font-weight:bold;
+      color:#1d1d1d;
+      line-height:1.1;
+      text-transform:uppercase;
+    }
+    
+    .toc-subtitle{
+      font-family:"IBM Plex Mono", ui-monospace, monospace;
+      font-size:14px;
+      margin:0 0 40px;
+      color:#666;
+      letter-spacing:2px;
+      text-transform:uppercase;
+      font-weight:600;
+    }
+    
+    .toc-list{
+      list-style:none;
+      padding:0;
+      margin:0;
+      font-family:Anton, Impact, system-ui, sans-serif;
+      font-size:20px;
+      line-height:2.6;
+      color:#1d1d1d;
+      letter-spacing:0.8px;
+    }
+    
+    .toc-list li{
+      padding:6px 0;
+      font-weight:normal;
+      transition:transform 0.2s ease, padding-left 0.2s ease;
+    }
+    
+    .toc-link{
+      color:#1d1d1d;
+      text-decoration:none;
+      display:block;
+      cursor:default;
+      transition:color 0.2s ease;
+      pointer-events:none;
+      opacity:0.5;
+    }
+    
+    .toc-link:hover{
+      color:#666;
+    }
+    
+    .toc-list li:hover{
+      transform:translateX(4px);
+    }
+    
+    .toc-link.active{
+      cursor:pointer;
+      pointer-events:auto;
+      opacity:1;
+    }
+    
+    .magnifying-glass-container{
+      position:absolute;
+      top:32%;
+      left:52%;
+      transform:translateX(-25%);
+      z-index:15;
+      cursor:pointer;
+      transition:transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      filter:drop-shadow(0 8px 16px rgba(0,0,0,0.15));
+    }
+    
+    .magnifying-glass-container:hover{
+      transform:translateX(-25%) scale(1.08) rotate(-2deg);
+      filter:drop-shadow(0 12px 24px rgba(0,0,0,0.2));
+    }
+    
+    .magnifying-glass{
+      width:360px;
+      height:360px;
+    }
+    
+    .magnifying-glass-circle{
+      fill:#fff;
+      stroke:#1d1d1d;
+      stroke-width:16;
+      filter:drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
+    }
+    
+    .magnifying-glass-handle{
+      stroke:#1d1d1d;
+      stroke-width:16;
+      stroke-linecap:round;
+      stroke-linejoin:round;
+    }
+    
+    .magnifying-glass-text{
+      font-family:"IBM Plex Mono", ui-monospace, monospace;
+      font-size:16px;
+      fill:#1d1d1d;
+      font-weight:700;
+      pointer-events:none;
+      letter-spacing:1px;
+    }
+    
+    /* Decorative corner elements */
+    .corner-deco{
+      position:absolute;
+      width:60px;
+      height:60px;
+      border:3px solid #1d1d1d;
+      z-index:3;
+    }
+    
+    .corner-deco-tl{
+      top:20px;
+      left:20px;
+      border-right:none;
+      border-bottom:none;
+    }
+    
+    .corner-deco-br{
+      bottom:20px;
+      right:20px;
+      border-left:none;
+      border-top:none;
+    }
+    
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .white-frame {
+      animation: fadeInUp 0.7s ease-out;
+    }
+    
+    .toc-title {
+      animation: fadeInUp 0.8s ease-out 0.1s both;
+    }
+    
+    .toc-list {
+      animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+    
+    .magnifying-glass-container {
+      animation: fadeIn 0.9s ease-out 0.4s both;
+    }
+  </style>
+</head>
+<body>
+  <main class="investigate-page">
+    <a href="index.html" class="back-link">← Return</a>
+    
+    <div class="frame-container">
+      <div class="white-frame">
+        <!-- Decorative corners -->
+        <div class="corner-deco corner-deco-tl"></div>
+        <div class="corner-deco corner-deco-br"></div>
+        
+        <!-- Vertical divider -->
+        <div class="divider"></div>
+        
+        <!-- Left side content -->
+        <div class="left-content">
+          <h1 class="toc-title">TAKING A CLOSER LOOK_</h1>
+          <p class="toc-subtitle">Table of Contents</p>
+          <ul class="toc-list">
+            <li><a href="#" class="toc-link" data-href="desk.html#map">1. The Geography of Literacy</a></li>
+            <li><a href="#" class="toc-link" data-href="desk.html#laptop">2. What's Your District Spending on You?</a></li>
+            <li><a href="#" class="toc-link" data-href="desk.html#books">3. Where Are America's Library Deserts?</a></li>
+            <li><a href="#" class="toc-link" data-href="desk.html#paper">4. Let's talk about scores</a></li>
+            <li><a href="#" class="toc-link" data-href="desk.html#gradcap">5. The Long Shadow of Early Literacy</a></li>
+          </ul>
+        </div>
+        
+        <!-- Magnifying glass overlapping the divider (opaque white circle covers the line) -->
+        <a href="design.html" class="magnifying-glass-container">
+          <svg class="magnifying-glass" viewBox="0 0 200 200">
+            <!-- White circle background to cover divider -->
+            <circle cx="100" cy="100" r="75" fill="#fff"/>
+            <!-- Outer stroke circle -->
+            <circle class="magnifying-glass-circle" cx="100" cy="100" r="70"/>
+            <!-- Handle -->
+            <line class="magnifying-glass-handle" x1="155" y1="155" x2="190" y2="190"/>
+            <!-- Text -->
+            <text class="magnifying-glass-text" x="100" y="108" text-anchor="middle">click me</text>
+          </svg>
+        </a>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
+
+
+

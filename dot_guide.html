@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dot Indicator Guide</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f0e8;
+      padding: 60px 40px;
+      line-height: 1.6;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      font-size: 48px;
+      font-weight: 900;
+      margin-bottom: 20px;
+      color: #1d1d1d;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+    
+    .subtitle {
+      font-size: 18px;
+      color: #666;
+      margin-bottom: 60px;
+    }
+    
+    .demo-section {
+      background: white;
+      border: 3px solid #1d1d1d;
+      border-radius: 12px;
+      padding: 40px;
+      margin-bottom: 40px;
+      box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.1);
+    }
+    
+    h2 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 30px;
+      color: #1d1d1d;
+    }
+    
+    .states-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 40px;
+      margin-top: 30px;
+    }
+    
+    .state-demo {
+      text-align: center;
+    }
+    
+    .state-label {
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #1d1d1d;
+      font-size: 16px;
+    }
+    
+    .dot-container {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 20px;
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f9f9f9;
+      position: relative;
+    }
+    
+    .dot {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #4a4a4a 0%, #6a6a6a 100%);
+      border: 3px solid #2a2a2a;
+      border-radius: 50%;
+      box-shadow: 
+        0 4px 12px rgba(0, 0, 0, 0.3),
+        inset 0 2px 4px rgba(255, 255, 255, 0.2),
+        0 0 0 2px rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .dot.pulsing {
+      animation: dotPulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes dotPulse {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 
+          0 4px 12px rgba(0, 0, 0, 0.3),
+          inset 0 2px 4px rgba(255, 255, 255, 0.2),
+          0 0 0 2px rgba(255, 255, 255, 0.1);
+      }
+      50% {
+        transform: scale(1.15);
+        box-shadow: 
+          0 6px 18px rgba(0, 0, 0, 0.4),
+          inset 0 2px 4px rgba(255, 255, 255, 0.3),
+          0 0 0 4px rgba(74, 74, 74, 0.3);
+      }
+    }
+    
+    .dot.hover {
+      transform: scale(1.2);
+      background: linear-gradient(135deg, #5a5a5a 0%, #7a7a7a 100%);
+      box-shadow: 
+        0 6px 16px rgba(0, 0, 0, 0.4),
+        inset 0 2px 4px rgba(255, 255, 255, 0.3),
+        0 0 0 3px rgba(255, 255, 255, 0.2);
+    }
+    
+    .dot.clicked {
+      background: linear-gradient(135deg, rgba(74, 74, 74, 0.3) 0%, rgba(106, 106, 106, 0.3) 100%);
+      border-color: rgba(42, 42, 42, 0.3);
+      opacity: 0.4;
+      box-shadow: 
+        0 2px 6px rgba(0, 0, 0, 0.15),
+        inset 0 1px 2px rgba(255, 255, 255, 0.1);
+    }
+    
+    .description {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.6;
+    }
+    
+    .features {
+      background: #fff8e1;
+      border: 2px solid #ffc107;
+      border-radius: 8px;
+      padding: 20px;
+      margin-top: 40px;
+    }
+    
+    .features h3 {
+      font-size: 20px;
+      margin-bottom: 15px;
+      color: #1d1d1d;
+    }
+    
+    .features ul {
+      margin-left: 20px;
+    }
+    
+    .features li {
+      margin-bottom: 10px;
+      color: #333;
+    }
+    
+    .code-block {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    
+    .highlight {
+      color: #ff79c6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Grey Dot Indicators</h1>
+    <p class="subtitle">Visual feedback system for clickable desk artifacts</p>
+    
+    <div class="demo-section">
+      <h2>Dot States</h2>
+      
+      <div class="states-container">
+        <div class="state-demo">
+          <div class="state-label">1. Default (Pulsing)</div>
+          <div class="dot-container">
+            <div class="dot pulsing"></div>
+          </div>
+          <p class="description">
+            <strong>Unclicked artifacts</strong><br>
+            The dot pulses gently to draw attention to unexplored items
+          </p>
+        </div>
+        
+        <div class="state-demo">
+          <div class="state-label">2. Hover</div>
+          <div class="dot-container">
+            <div class="dot hover"></div>
+          </div>
+          <p class="description">
+            <strong>On mouse hover</strong><br>
+            Dot scales up and brightens to indicate interactivity
+          </p>
+        </div>
+        
+        <div class="state-demo">
+          <div class="state-label">3. Clicked (Semi-transparent)</div>
+          <div class="dot-container">
+            <div class="dot clicked"></div>
+          </div>
+          <p class="description">
+            <strong>After clicking</strong><br>
+            Dot becomes semi-transparent to show it's been explored
+          </p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="demo-section">
+      <h2>Dot Positions on Artifacts</h2>
+      <p class="description" style="margin-bottom: 20px;">
+        Each dot is positioned in the top-right corner of its respective artifact:
+      </p>
+      <ul style="margin-left: 30px; color: #333;">
+        <li><strong>US Map:</strong> Top 10%, Right 10%</li>
+        <li><strong>Laptop:</strong> Top 8%, Right 12%</li>
+        <li><strong>Books:</strong> Top 8%, Right 15%</li>
+        <li><strong>Paper:</strong> Top 10%, Right 10%</li>
+        <li><strong>Graduation Cap:</strong> Top 15%, Right 20%</li>
+      </ul>
+    </div>
+    
+    <div class="features">
+      <h3>✨ Key Features</h3>
+      <ul>
+        <li><strong>Pulsing Animation:</strong> Unclicked dots pulse to grab attention</li>
+        <li><strong>Hover Feedback:</strong> Dots scale and brighten on hover</li>
+        <li><strong>Click Tracking:</strong> Progress saved to localStorage (persists across sessions)</li>
+        <li><strong>Semi-transparent State:</strong> Clicked dots fade to 40% opacity</li>
+        <li><strong>Progress Counter:</strong> Top-right shows "Explored: X/5"</li>
+        <li><strong>Progress Bar:</strong> Green bar fills as you explore items</li>
+      </ul>
+    </div>
+    
+    <div class="demo-section">
+      <h2>CSS Implementation</h2>
+      <div class="code-block">
+<span class="highlight">.dot-indicator</span> {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  background: linear-gradient(135deg, #4a4a4a 0%, #6a6a6a 100%);
+  border: 3px solid #2a2a2a;
+  border-radius: 50%;
+  animation: dotPulse 2s ease-in-out infinite;
+}
+
+<span class="highlight">.clickable-area.clicked .dot-indicator</span> {
+  background: linear-gradient(135deg, rgba(74, 74, 74, 0.3) 0%, rgba(106, 106, 106, 0.3) 100%);
+  border-color: rgba(42, 42, 42, 0.3);
+  opacity: 0.4;
+  animation: none;
+}
+      </div>
+    </div>
+  </div>
+</body>
+</html>
