@@ -1,0 +1,183 @@
+/* Typography
+  - Headline: Anton for blocky bold
+  - Secondary: Bebas Neue for large condensed
+  - Body/labels: Inter and IBM Plex Mono
+*/
+
+:root{
+  --paper:#efe6da;
+  --ink:#111;
+  --muted:#232323;
+  --shadow:rgba(0,0,0,.12);
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+/* Subtle paper grain */
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  pointer-events:none;
+  background:
+    radial-gradient(200px 140px at 85% 0%, rgba(255,255,255,.9), rgba(255,255,255,0)) no-repeat,
+    radial-gradient(600px 200px at 50% 100%, rgba(0,0,0,.05), transparent),
+    repeating-linear-gradient(45deg, rgba(0,0,0,.015), rgba(0,0,0,.015) 2px, transparent 2px, transparent 4px);
+  mix-blend-mode:multiply;
+}
+
+.canvas{
+  position:relative;
+  min-height:100vh;
+  padding:48px 56px 80px;
+  overflow:hidden;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+.pill{
+  display:inline-block;
+  font-family:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size:16px;
+  letter-spacing:.06em;
+  background:#f7efe6;
+  border:2px solid var(--ink);
+  border-radius:28px; padding:10px 22px;
+  box-shadow:3px 3px 0 var(--ink);
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.hero{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  gap:40px; margin-top:36px;
+}
+
+.book-group{ position:relative; width:56%; min-width:520px; padding:20px 0; animation: fadeInUp 0.8s ease-out 0.2s both; }
+.book{ width:100%; height:auto; max-width:480px; animation: float 4s ease-in-out infinite; }
+.glass{ position:absolute; left:260px; top:80px; width:140px; height:auto; z-index:2; animation: fadeIn 1s ease-out 0.4s both, float 3s ease-in-out infinite 1s; }
+
+.click-bubble{
+  position:absolute; left:360px; top:10px;
+  display:grid; place-items:center; text-align:center;
+  width:160px; height:100px;
+  background:#0d0d0d; color:#fff; border-radius:80px;
+  text-decoration:none;
+  font-family:"IBM Plex Mono", ui-monospace, monospace;
+  font-size:16px; line-height:1.15;
+  box-shadow:0 8px 18px var(--shadow), 3px 3px 0 #000 inset;
+  transition: transform .12s ease, box-shadow .12s ease;
+  z-index:10;
+  animation: fadeInUp 0.8s ease-out 0.6s both, float 3s ease-in-out infinite 1.5s;
+}
+.click-bubble:hover{ transform: translateY(-4px) scale(1.05); box-shadow:0 12px 22px var(--shadow), 0 0 0 3px #fff inset; }
+
+.arrow-label{
+  position:absolute; left:320px; top:60px; width:60px; height:60px;
+  z-index:3;
+}
+.arrow-label::before{
+  content:""; position:absolute; left:0; top:20px; width:42px; height:3px; background:var(--ink);
+  transform:rotate(-28deg); transform-origin:left center;
+}
+.arrow-label::after{
+  content:""; position:absolute; left:40px; top:17px; width:0; height:0;
+  border:7px solid transparent; border-left-color:var(--ink); transform:rotate(-28deg);
+}
+
+.title-block{ width:44%; min-width:420px; padding-top:60px; animation: fadeInUp 0.8s ease-out 0.3s both; }
+.look{
+  font-family: Anton, "Bebas Neue", Impact, system-ui, sans-serif;
+  font-size:128px; line-height:.9; letter-spacing:1px;
+}
+.row{ display:flex; align-items:baseline; gap:24px; }
+.at{
+  font-family: Anton, "Bebas Neue", Impact, system-ui, sans-serif;
+  font-size:120px; line-height:1; padding-left:8px;
+  animation: pulse 2s ease-in-out infinite;
+}
+.literacy{
+  font-family: Anton, "Bebas Neue", Impact, system-ui, sans-serif;
+  font-size:120px; line-height:1; letter-spacing:1px;
+}
+.subtitle{
+  margin:14px 0 0; color:#111; font-weight:800; font-size:40px; line-height:1.2;
+  animation: fadeIn 1s ease-out 0.6s both;
+}
+
+.grid-scribble{
+  position:absolute; right:24px; top:8px; width:340px; height:280px;
+  background-image:
+    linear-gradient(to right, #0f0f0f 2px, transparent 2px),
+    linear-gradient(to bottom, #0f0f0f 2px, transparent 2px);
+  background-size: 56px 100%, 100% 56px;
+  opacity:.8;
+}
+
+.credits{
+  position:relative; display:flex; justify-content:space-between; gap:24px; margin-top:48px;
+  font-family:"IBM Plex Mono", ui-monospace, monospace; font-size:16px;
+  z-index:5;
+  animation: fadeInUp 0.8s ease-out 0.5s both;
+}
+.credits .label{ 
+  font-weight:600; 
+  letter-spacing:.04em; 
+  margin-bottom:8px;
+  display:block;
+}
+.credits .left, .credits .right{ 
+  white-space:pre-line;
+  line-height:1.6;
+}
+.credits .right{
+  text-align:right;
+}
+
+.plus-cluster{
+  position:absolute; left:46%; bottom:40px; transform:translateX(-50%);
+  font-family:"Bebas Neue", Anton, Impact, system-ui, sans-serif;
+  font-size:72px; letter-spacing:16px;
+  color:#0f0f0f;
+}
+.plus-cluster div{ text-align:center; }
+
+@media (max-width: 1100px){
+  .hero{ flex-direction:column; }
+  .book-group{ width:100%; min-width:0; }
+  .title-block{ width:100%; min-width:0; }
+  .grid-scribble{ opacity:.25; }
+}
+
+
+
