@@ -132,45 +132,12 @@ export async function renderReadingMap({
     });
     
     const years = [...gradeData.years].sort((a, b) => a - b);
-    
-    // Filter years to only include those with data
-    const yearsWithData = years.filter(year => {
-      const yearKey = String(year);
-      // Check if any state has data for this year
-      for (const [stateCode, yearScores] of stateData.entries()) {
-        const score = yearScores[yearKey];
-        if (score != null && !isNaN(score) && score > 0) {
-          return true;
-        }
-      }
-      return false;
-    });
-    
-    // Calculate global min/max across ALL years for consistent color scale
-    const allScores = [];
-    yearsWithData.forEach(year => {
-      const yearKey = String(year);
-      stateData.forEach((scores, stateCode) => {
-        const score = scores[yearKey];
-        if (score != null && !isNaN(score) && score > 0) {
-          allScores.push(score);
-        }
-      });
-    });
-    
-    let globalMin = allScores.length > 0 ? d3.min(allScores) : 0;
-    let globalMax = allScores.length > 0 ? d3.max(allScores) : 100;
-    let globalNationalAvg = nationalAvgByYear.size > 0 
-      ? d3.mean(Array.from(nationalAvgByYear.values())) 
-      : (globalMin + globalMax) / 2;
-    
-    let currentYear = yearsWithData[yearsWithData.length - 1]; // Start with latest year with data
+    let currentYear = years[years.length - 1]; // Start with latest year
     let currentGrade = grade;
     
     console.log(`✅ Loaded data for Grade ${grade}:`);
     console.log(`   - ${stateData.size} states`);
-    console.log(`   - ${yearsWithData.length} years with data: ${yearsWithData.join(', ')}`);
-    console.log(`   - Global score range: ${globalMin.toFixed(1)} - ${globalMax.toFixed(1)}`);
+    console.log(`   - ${years.length} years: ${years.join(', ')}`);
     console.log(`   - Selected state: ${selectedState || 'None'}`);
   
     // Controls
@@ -234,194 +201,62 @@ export async function renderReadingMap({
         nationalAvgByYear.set(year, avg);
       });
       
-      // Update years and filter to only those with data
-      const newYears = [...newGradeData.years].sort((a, b) => a - b);
-      const newYearsWithData = newYears.filter(year => {
-        const yearKey = String(year);
-        for (const [stateCode, yearScores] of stateData.entries()) {
-          const score = yearScores[yearKey];
-          if (score != null && !isNaN(score) && score > 0) {
-            return true;
-          }
-        }
-        return false;
-      });
+      // Update years
+      years.length = 0;
+      years.push(...[...newGradeData.years].sort((a, b) => a - b));
+      currentYear = years[years.length - 1];
       
-      // Recalculate global min/max for new grade
-      const newAllScores = [];
-      newYearsWithData.forEach(year => {
-        const yearKey = String(year);
-        stateData.forEach((scores, stateCode) => {
-          const score = scores[yearKey];
-          if (score != null && !isNaN(score) && score > 0) {
-            newAllScores.push(score);
-          }
-        });
-      });
+      // Update year dropdown
+      yearSelect.selectAll('option').remove();
+      const sortedYears = [...years].sort((a, b) => b - a);
+      yearSelect.selectAll('option')
+        .data(sortedYears)
+        .enter()
+        .append('option')
+        .attr('value', d => d)
+        .property('selected', d => d === currentYear)
+        .text(d => d);
       
-      const newGlobalMin = newAllScores.length > 0 ? d3.min(newAllScores) : 0;
-      const newGlobalMax = newAllScores.length > 0 ? d3.max(newAllScores) : 100;
-      const newGlobalNationalAvg = nationalAvgByYear.size > 0 
-        ? d3.mean(Array.from(nationalAvgByYear.values())) 
-        : (newGlobalMin + newGlobalMax) / 2;
-      
-      // Update global variables
-      globalMin = newGlobalMin;
-      globalMax = newGlobalMax;
-      globalNationalAvg = newGlobalNationalAvg;
-      
-      yearsWithData.length = 0;
-      yearsWithData.push(...newYearsWithData);
-      currentYear = yearsWithData[yearsWithData.length - 1];
-      
-      // Update year slider
-      yearSlider
-        .attr('min', Math.min(...yearsWithData))
-        .attr('max', Math.max(...yearsWithData))
-        .property('value', currentYear);
-      
-      // Update year display
-      yearDisplay.text(currentYear);
-      
-      // Update min/max labels
-      minYearLabel.text(Math.min(...yearsWithData));
-      maxYearLabel.text(Math.max(...yearsWithData));
+      yearSelect.property('value', currentYear);
       
       console.log(`🔄 Grade changed to ${currentGrade}`);
       updateMap();
       updateLegend();
     });
     
-    // Year selector - Slider
+    // Year selector
     const yearGroup = controls.append('div')
       .style('display', 'flex')
       .style('align-items', 'center')
-      .style('gap', '10px')
-      .style('width', '400px')
-      .style('flex-shrink', '0');
+      .style('gap', '10px');
     
     yearGroup.append('span')
       .style('font-family', 'Inter, system-ui')
       .style('font-size', '14px')
       .style('color', ink)
       .style('font-weight', '500')
-      .style('white-space', 'nowrap')
       .text('Year:');
     
-    // Year value display
-    const yearDisplay = yearGroup.append('span')
+    const yearSelect = yearGroup.append('select')
       .style('font-family', '"IBM Plex Mono", ui-monospace, monospace')
-      .style('font-size', '14px')
-      .style('color', ink)
-      .style('font-weight', '600')
-      .style('min-width', '50px')
-      .text(currentYear);
-    
-    // Slider container - fixed width to prevent size changes
-    const sliderContainer = yearGroup.append('div')
-      .style('width', '220px')
-      .style('flex-shrink', '0')
-      .style('display', 'flex')
-      .style('align-items', 'center')
-      .style('gap', '8px');
-    
-    // Min year label
-    const minYearLabel = sliderContainer.append('span')
-      .style('font-family', '"IBM Plex Mono", ui-monospace, monospace')
-      .style('font-size', '11px')
-      .style('color', ink)
-      .style('opacity', '0.7')
-      .style('white-space', 'nowrap')
-      .text(Math.min(...yearsWithData));
-    
-    // Slider input - only use years with data
-    const yearSlider = sliderContainer.append('input')
-      .attr('type', 'range')
-      .attr('min', Math.min(...yearsWithData))
-      .attr('max', Math.max(...yearsWithData))
-      .attr('step', 1)
-      .property('value', currentYear)
-      .style('width', '200px')
-      .style('flex-shrink', '0')
-      .style('height', '6px')
-      .style('background', ink)
-      .style('outline', 'none')
+      .style('border', `2px solid ${ink}`)
+      .style('background', paper)
+      .style('padding', '6px 10px')
+      .style('border-radius', '4px')
       .style('cursor', 'pointer')
-      .style('-webkit-appearance', 'none')
-      .style('appearance', 'none');
+      .style('min-width', '80px');
     
-    // Custom slider styling
-    yearSlider.node().style.setProperty('-webkit-appearance', 'none', 'important');
-    yearSlider.node().style.setProperty('appearance', 'none', 'important');
+    const sortedYears = [...years].sort((a, b) => b - a);
+    yearSelect.selectAll('option')
+      .data(sortedYears)
+      .enter()
+      .append('option')
+      .attr('value', d => d)
+      .property('selected', d => d === currentYear)
+      .text(d => d);
     
-    // Style the slider track and thumb
-    const sliderStyle = `
-      input[type="range"]::-webkit-slider-track {
-        background: ${ink};
-        height: 6px;
-        border-radius: 3px;
-      }
-      input[type="range"]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        appearance: none;
-        width: 18px;
-        height: 18px;
-        background: ${ink};
-        border: 2px solid ${paper};
-        border-radius: 50%;
-        cursor: pointer;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      }
-      input[type="range"]::-moz-range-track {
-        background: ${ink};
-        height: 6px;
-        border-radius: 3px;
-      }
-      input[type="range"]::-moz-range-thumb {
-        width: 18px;
-        height: 18px;
-        background: ${ink};
-        border: 2px solid ${paper};
-        border-radius: 50%;
-        cursor: pointer;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-      }
-    `;
-    
-    // Add styles to document if not already present
-    if (!document.getElementById('viz2-slider-styles')) {
-      const styleEl = document.createElement('style');
-      styleEl.id = 'viz2-slider-styles';
-      styleEl.textContent = sliderStyle;
-      document.head.appendChild(styleEl);
-    }
-    
-    // Max year label
-    const maxYearLabel = sliderContainer.append('span')
-      .style('font-family', '"IBM Plex Mono", ui-monospace, monospace')
-      .style('font-size', '11px')
-      .style('color', ink)
-      .style('opacity', '0.7')
-      .style('white-space', 'nowrap')
-      .text(Math.max(...yearsWithData));
-    
-    // Update visualization as user slides - skip years without data
-    yearSlider.on('input', function() {
-      let newYear = parseInt(this.value);
-      
-      // If this year doesn't have data, find the nearest year that does
-      if (!yearsWithData.includes(newYear)) {
-        // Find closest year with data
-        const distances = yearsWithData.map(y => Math.abs(y - newYear));
-        const minDistance = Math.min(...distances);
-        const closestIndex = distances.indexOf(minDistance);
-        newYear = yearsWithData[closestIndex];
-        // Update slider position to the valid year
-        this.value = newYear;
-      }
-      
-      currentYear = newYear;
-      yearDisplay.text(newYear);
+    yearSelect.on('change', function() {
+      currentYear = parseInt(this.value);
       console.log(`📅 Year changed to ${currentYear}`);
       updateMap();
       updateLegend();
@@ -484,14 +319,18 @@ export async function renderReadingMap({
     
     console.log(`✅ Built ID→USPS mapping for ${idToUSPS.size} states`);
     
-    // Color scale function - uses global min/max for consistency
+    // Color scale function
     function getColorScale(yearData, nationalAvg) {
-      // Use global min/max/avg for consistent colors across all years
-      const mid = nationalAvg || globalNationalAvg;
+      const scores = Array.from(yearData.values()).filter(v => v != null && !isNaN(v));
+      if (scores.length === 0) return d3.scaleLinear().domain([0, 100]).range(['#ddd', '#ddd']);
+      
+      const min = d3.min(scores);
+      const max = d3.max(scores);
+      const mid = nationalAvg || d3.mean(scores);
       
       // Three-color scale: red (below avg) → yellow (avg) → green (above avg)
       return d3.scaleLinear()
-        .domain([globalMin, mid, globalMax])
+        .domain([min, mid, max])
         .range(['#c0392b', '#f39c12', '#27ae60'])
         .clamp(true);
     }
@@ -572,8 +411,8 @@ export async function renderReadingMap({
                 <span style="font-size: 12px;">National Avg: <strong>${currentNatAvg ? currentNatAvg.toFixed(1) : 'N/A'}</strong></span>
               </div>
             `)
-            .style('left', (event.clientX + 15) + 'px')
-            .style('top', (event.clientY - 15) + 'px');
+            .style('left', (event.pageX + 15) + 'px')
+            .style('top', (event.pageY - 15) + 'px');
         })
         .on('mouseout', function() {
           d3.select(this)
@@ -695,7 +534,7 @@ export async function renderReadingMap({
     // Tooltip
     const tooltip = wrap.append('div')
       .attr('class', 'map-tooltip')
-      .style('position', 'fixed')
+      .style('position', 'absolute')
       .style('visibility', 'hidden')
       .style('background', '#ffffff')
       .style('border', `2px solid ${ink}`)
@@ -740,14 +579,16 @@ export async function renderReadingMap({
         return;
       }
       
-      // Use global min/max for consistent legend across all years
+      const min = d3.min(scores);
+      const max = d3.max(scores);
+      
       legend.html(`
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
           <span style="font-weight: 600; font-size: 13px;">Score Range (${currentYear}):</span>
           <div style="display: flex; align-items: center; gap: 5px;">
-            <span style="font-size: 12px;">${globalMin.toFixed(0)}</span>
+            <span style="font-size: 12px;">${min.toFixed(0)}</span>
             <div style="width: 120px; height: 20px; background: linear-gradient(to right, #c0392b, #f39c12, #27ae60); border: 2px solid ${ink}; border-radius: 3px;"></div>
-            <span style="font-size: 12px;">${globalMax.toFixed(0)}</span>
+            <span style="font-size: 12px;">${max.toFixed(0)}</span>
           </div>
           <span style="font-size: 12px;">| National Avg: <strong>${currentNatAvg ? currentNatAvg.toFixed(1) : 'N/A'}</strong></span>
         </div>
@@ -762,10 +603,9 @@ export async function renderReadingMap({
     
     return {
       updateYear: (year) => {
-        if (yearsWithData.includes(year)) {
+        if (years.includes(year)) {
           currentYear = year;
-          yearSlider.property('value', year);
-          yearDisplay.text(year);
+          yearSelect.property('value', year);
           updateMap();
           updateLegend();
         }
