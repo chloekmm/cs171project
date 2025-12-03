@@ -1372,7 +1372,7 @@
       }
     }
     
-    // Initialize visualization 4 (High School Outcomes)
+    // Initialize visualization 4 (Future Outcomes)
     async function initViz4() {
       // Always clear container first to prevent duplicates
       const container = document.getElementById('viz4-container');
@@ -1502,21 +1502,22 @@
     }
     
     // === Click Tracking Functionality ===
-    const STORAGE_KEY = 'deskVizProgress_v2'; // Updated key to avoid conflicts
+    // Use sessionStorage instead of localStorage - resets when browser/tab is closed
+    const STORAGE_KEY = 'deskVizProgress_session';
     const TOTAL_ITEMS = 5;
     
-    // Get clicked items from localStorage
+    // Get clicked items from sessionStorage (not localStorage)
     function getClickedItems() {
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = sessionStorage.getItem(STORAGE_KEY);
       return stored ? JSON.parse(stored) : [];
     }
     
-    // Save clicked item to localStorage
+    // Save clicked item to sessionStorage (not localStorage)
     function markItemClicked(itemId) {
       const clicked = getClickedItems();
       if (!clicked.includes(itemId)) {
         clicked.push(itemId);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(clicked));
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(clicked));
         updateProgress();
       }
     }
@@ -1527,8 +1528,16 @@
       const count = clicked.length;
       const percentage = (count / TOTAL_ITEMS) * 100;
       
-      document.getElementById('progressCount').textContent = `${count}/${TOTAL_ITEMS}`;
-      document.getElementById('progressFill').style.width = `${percentage}%`;
+      const progressCountEl = document.getElementById('progressCount');
+      const progressFillEl = document.getElementById('progressFill');
+      
+      if (progressCountEl) {
+        progressCountEl.textContent = `${count}/${TOTAL_ITEMS}`;
+      }
+      
+      if (progressFillEl) {
+        progressFillEl.style.width = `${percentage}%`;
+      }
     }
     
     // Apply greyed-out state to clicked items
@@ -1544,11 +1553,15 @@
     
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
-      // Debug: Clear old storage keys
-      const oldKeys = ['literacyVizClicked', 'viz4_outcomes_cache'];
+      // IMPORTANT: Clear sessionStorage on every page load for fresh start
+      sessionStorage.clear();
+      
+      // Clear any old localStorage keys from previous versions
+      const oldKeys = ['deskVizProgress_v2', 'literacyVizClicked', 'viz4_outcomes_cache', 'exploredViz'];
       oldKeys.forEach(key => {
         if (localStorage.getItem(key)) {
-          console.log('Clearing old storage key:', key);
+          console.log('Clearing old localStorage key:', key);
+          localStorage.removeItem(key);
         }
       });
       
@@ -1558,6 +1571,7 @@
         allItems.push(el.dataset.item);
       });
       console.log('=== DESK PROGRESS TRACKER ===');
+      console.log('SessionStorage cleared on page load - fresh start guaranteed');
       console.log('All tracked items:', allItems);
       console.log('Items clicked:', getClickedItems());
       console.log('Progress:', getClickedItems().length + '/' + TOTAL_ITEMS);
@@ -1570,8 +1584,8 @@
       if (resetBtn) {
         resetBtn.addEventListener('click', function() {
           if (confirm('Are you sure you want to reset all progress? This will clear which items you\'ve explored.')) {
-            // Clear localStorage
-            localStorage.removeItem(STORAGE_KEY);
+            // Clear sessionStorage
+            sessionStorage.removeItem(STORAGE_KEY);
             
             // Remove clicked states from all areas
             document.querySelectorAll('.clickable-area').forEach(area => {
